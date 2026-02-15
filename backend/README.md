@@ -28,3 +28,16 @@ Express + TypeScript API with Prisma (PostgreSQL), JWT auth, OAuth (Google/Faceb
   - `POST /api/auth/forgot-password` – email (returns ok; if user exists, reset token created)
   - `POST /api/auth/reset-password` – token, newPassword
 - **Auth (OAuth / dev):** `POST /api/auth/google`, `POST /api/auth/facebook`, `GET /api/auth/me`, `POST /api/auth/dev` (dev only)
+- **Vehicles (Fleet Management):** All require `Authorization: Bearer <token>`
+  - `GET /api/vehicles` – list vehicles for current org
+  - `GET /api/vehicles/:id` – get vehicle by ID
+  - `POST /api/vehicles` – create vehicle (make, model, vin?, registration?, mileage?, purchaseDate?, status?)
+  - `PUT /api/vehicles/:id` – update vehicle
+  - `DELETE /api/vehicles/:id` – delete vehicle
+  - Status: ACTIVE | PAUSED | FROZEN | IN_SERVICE
+- **Drivers:** `GET/POST /api/drivers`, `GET/PUT/DELETE /api/drivers/:id` – name, licenseNumber?, licenseExpiry?, phone?, userId?, status (ACTIVE | PAUSED | FROZEN)
+- **Trips:** `GET/POST /api/trips`, `GET/PUT/DELETE /api/trips/:id` – vehicleId, driverId, startAt, startMileage?, endAt?, endMileage?, status (PRE_TRIP | IN_PROGRESS | POST_TRIP | COMPLETED), notes?
+- **Fuel records:** `GET/POST /api/fuel-records`, `GET/DELETE /api/fuel-records/:id` – vehicleId, tripId?, amountLiters, costCents?, recordedAt?, notes?
+- **Locations (Parking/Service):** `GET/POST /api/locations`, `GET/PUT/DELETE /api/locations/:id` – name, type (PARKING | SERVICE), address?, status (ACTIVE | PAUSED | FROZEN). Query: `?type=PARKING` or `?type=SERVICE`
+- **GPS (mock):** `GET /api/gps/positions` – returns mock vehicle positions for current org (for map integration)
+- **Documents:** `GET/POST /api/documents`, `GET/DELETE /api/documents/:id` – metadata only (entityType: TRIP | VEHICLE | DRIVER, entityId, fileName, fileUrl?, mimeType?). Query: `?entityType=TRIP&entityId=uuid`

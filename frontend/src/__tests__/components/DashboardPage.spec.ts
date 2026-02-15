@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { mount } from '@vue/test-utils';
 import { createPinia } from 'pinia';
 import { createI18n } from 'vue-i18n';
+import { createRouter, createMemoryHistory } from 'vue-router';
 import DashboardPage from '../../views/DashboardPage.vue';
 import en from '../../locales/en/index.json';
 
@@ -11,42 +12,58 @@ const i18n = createI18n({
   messages: { en },
 });
 
+const router = createRouter({
+  history: createMemoryHistory(),
+  routes: [
+    { path: '/', name: 'dashboard', component: DashboardPage },
+    { path: '/vehicles', name: 'vehicles', component: { template: '<div/>' } },
+    { path: '/drivers', name: 'drivers', component: { template: '<div/>' } },
+    { path: '/trips', name: 'trips', component: { template: '<div/>' } },
+    { path: '/fuel', name: 'fuel', component: { template: '<div/>' } },
+    { path: '/locations', name: 'locations', component: { template: '<div/>' } },
+  ],
+});
+
+vi.mock('../../api/vehicles.api', () => ({ vehiclesApi: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
+vi.mock('../../api/drivers.api', () => ({ driversApi: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
+vi.mock('../../api/trips.api', () => ({ tripsApi: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
+vi.mock('../../api/fuel.api', () => ({ fuelApi: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
+vi.mock('../../api/locations.api', () => ({ locationsApi: { list: vi.fn().mockResolvedValue({ data: { data: [] } }) } }));
+
 describe('DashboardPage', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
+  beforeEach(async () => {
+    await router.push('/');
+    vi.clearAllMocks();
   });
 
-  it('renders dashboard title and subtitle', () => {
+  it('renders dashboard title and subtitle', async () => {
     const wrapper = mount(DashboardPage, {
-      global: { plugins: [createPinia(), i18n] },
+      global: { plugins: [createPinia(), i18n, router] },
     });
+    await wrapper.vm.$nextTick();
     expect(wrapper.find('[data-test="dashboard-title"]').exists()).toBe(true);
     expect(wrapper.find('[data-test="dashboard-subtitle"]').exists()).toBe(true);
   });
 
   it('shows loading state initially', () => {
     const wrapper = mount(DashboardPage, {
-      global: { plugins: [createPinia(), i18n] },
+      global: { plugins: [createPinia(), i18n, router] },
     });
     expect(wrapper.find('[data-test="row-loading"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="loading-text"]').exists()).toBe(true);
   });
 
-  it('shows empty state after loading', async () => {
+  it('shows overview with cards after loading', async () => {
     const wrapper = mount(DashboardPage, {
-      global: { plugins: [createPinia(), i18n] },
+      global: { plugins: [createPinia(), i18n, router] },
     });
-    await vi.advanceTimersByTimeAsync(1000);
-    expect(wrapper.find('[data-test="row-empty"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="row-loading"]').exists()).toBe(false);
-  });
-
-  it('has filter buttons and table with columns', () => {
-    const wrapper = mount(DashboardPage, {
-      global: { plugins: [createPinia(), i18n] },
-    });
-    expect(wrapper.find('[data-test="button-filter-new"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="button-filter-in-progress"]').exists()).toBe(true);
-    expect(wrapper.find('[data-test="table-tickets"]').exists()).toBe(true);
+    await wrapper.vm.$nextTick();
+    await new Promise((r) => setTimeout(r, 200));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.find('[data-test="dashboard-overview"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="card-vehicles"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="card-drivers"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="card-trips"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="card-fuel"]').exists()).toBe(true);
+    expect(wrapper.find('[data-test="card-locations"]').exists()).toBe(true);
   });
 });

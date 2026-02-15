@@ -11,12 +11,14 @@ import { api } from './boot/axios';
 import en from './locales/en/index.json';
 import srLat from './locales/sr-lat/index.json';
 import srCyr from './locales/sr-cyr/index.json';
+import es from './locales/es/index.json';
+import fr from './locales/fr/index.json';
 
 const i18n = createI18n({
   legacy: false,
   locale: 'en',
   fallbackLocale: 'en',
-  messages: { en, 'sr-lat': srLat, 'sr-cyr': srCyr },
+  messages: { en, 'sr-lat': srLat, 'sr-cyr': srCyr, es, fr },
 });
 
 const app = createApp(App);

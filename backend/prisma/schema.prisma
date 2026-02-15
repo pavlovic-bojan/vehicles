@@ -28,7 +28,14 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users User[]
+  users    User[]
+  vehicles Vehicle[]
+  trailers Trailer[]
+  drivers  Driver[]
+  trips    Trip[]
+  fuelRecords FuelRecord[]
+  locations Location[]
+  documents Document[]
 
   @@map("organizations")
 }
@@ -50,6 +57,8 @@ model User {
 
   loginAudits        LoginAudit[]
   passwordResetTokens PasswordResetToken[]
+  driverProfile      Driver?
+  documents          Document[]
 
   @@unique([provider, providerId])
   @@index([email])
@@ -82,5 +91,191 @@ model LoginAudit {
   @@index([userId])
   @@index([createdAt])
   @@map("login_audits")
+}
+
+// --- Fleet Management (per project-doc PRD & node_ts_roadmap) ---
+enum VehicleStatus {
+  ACTIVE
+  PAUSED
+  FROZEN
+  IN_SERVICE
+}
+
+model Vehicle {
+  id             String        @id @default(uuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  make           String
+  model          String
+  vin            String?       // VIN optional for backward compatibility
+  registration   String?
+  mileage        Int           @default(0) // in km or miles per org preference
+  purchaseDate   DateTime?
+  status         VehicleStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  trips          Trip[]
+  fuelRecords    FuelRecord[]
+
+  @@index([orgId])
+  @@index([status])
+  @@map("vehicles")
+}
+
+model Trailer {
+  id             String        @id @default(uuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  make           String
+  model          String
+  registration   String?
+  mileage        Int           @default(0)
+  purchaseDate   DateTime?
+  status         VehicleStatus @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([orgId])
+  @@index([status])
+  @@map("trailers")
+}
+
+// --- Driver Management (PRD 4.8) ---
+enum DriverStatus {
+  ACTIVE
+  PAUSED
+  FROZEN
+}
+
+model Driver {
+  id             String        @id @default(uuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId         String?       @unique  // optional link to User for login
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name           String
+  licenseNumber  String?
+  licenseExpiry  DateTime?
+  phone          String?
+  status         DriverStatus  @default(ACTIVE)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  trips          Trip[]
+
+  @@index([orgId])
+  @@index([status])
+  @@map("drivers")
+}
+
+// --- Trip Lifecycle (PRD 4.5) ---
+enum TripStatus {
+  PRE_TRIP
+  IN_PROGRESS
+  POST_TRIP
+  COMPLETED
+}
+
+model Trip {
+  id             String        @id @default(uuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  vehicleId      String
+  vehicle        Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  driverId       String
+  driver         Driver       @relation(fields: [driverId], references: [id], onDelete: Restrict)
+  startAt        DateTime
+  endAt          DateTime?
+  startMileage   Int           @default(0)
+  endMileage     Int?
+  status         TripStatus    @default(PRE_TRIP)
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  fuelRecords    FuelRecord[]
+
+  @@index([orgId])
+  @@index([vehicleId])
+  @@index([driverId])
+  @@index([startAt])
+  @@map("trips")
+}
+
+// --- Fuel & Expense (PRD 4.6) ---
+model FuelRecord {
+  id             String        @id @default(uuid())
+  orgId          String
+  org            Organization  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  tripId         String?
+  trip           Trip?         @relation(fields: [tripId], references: [id], onDelete: SetNull)
+  vehicleId      String
+  vehicle        Vehicle      @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  amountLiters   Float         // liters
+  costCents      Int?          // optional cost in cents
+  recordedAt     DateTime      @default(now())
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([orgId])
+  @@index([tripId])
+  @@index([vehicleId])
+  @@map("fuel_records")
+}
+
+// --- Parking & Service (PRD 4.7) ---
+enum LocationType {
+  PARKING
+  SERVICE
+}
+
+enum LocationStatus {
+  ACTIVE
+  PAUSED
+  FROZEN
+}
+
+model Location {
+  id             String           @id @default(uuid())
+  orgId          String
+  org            Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name           String
+  type           LocationType     // PARKING | SERVICE
+  address        String?
+  status         LocationStatus   @default(ACTIVE)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([orgId])
+  @@index([type])
+  @@index([status])
+  @@map("locations")
+}
+
+// --- Document management (PRD 4.10) – metadata only; file storage optional ---
+enum DocumentEntityType {
+  TRIP
+  VEHICLE
+  DRIVER
+}
+
+model Document {
+  id          String            @id @default(uuid())
+  orgId       String
+  org         Organization     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  entityType  DocumentEntityType
+  entityId    String
+  fileName    String
+  fileUrl     String?           // URL or path after upload
+  mimeType    String?
+  uploadedBy  String?
+  user        User?             @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
+  createdAt   DateTime          @default(now())
+
+  @@index([orgId])
+  @@index([entityType, entityId])
+  @@map("documents")
 }
 

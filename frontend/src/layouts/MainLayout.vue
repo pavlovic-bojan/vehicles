@@ -90,6 +90,8 @@ import {
   Users,
   Route,
   BellRing,
+  Fuel,
+  MapPin,
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -103,6 +105,8 @@ const isDark = ref(false);
 
 const langOptions = [
   { locale: 'en', flag: '🇬🇧', label: 'English' },
+  { locale: 'es', flag: '🇪🇸', label: 'Español' },
+  { locale: 'fr', flag: '🇫🇷', label: 'Français' },
   { locale: 'sr-lat', flag: '🇷🇸', label: 'Srpski (latinica)' },
   { locale: 'sr-cyr', flag: '🇷🇸', label: 'Српски (ћирилица)' },
 ];
@@ -115,6 +119,8 @@ const navItems = [
   { name: 'vehicles', to: '/vehicles', label: 'layout.vehicles', icon: Truck },
   { name: 'drivers', to: '/drivers', label: 'layout.drivers', icon: Users },
   { name: 'trips', to: '/trips', label: 'layout.trips', icon: Route },
+  { name: 'fuel', to: '/fuel', label: 'layout.fuel', icon: Fuel },
+  { name: 'locations', to: '/locations', label: 'layout.locations', icon: MapPin },
   { name: 'notifications', to: '/notifications', label: 'layout.notifications', icon: BellRing },
 ];
 
