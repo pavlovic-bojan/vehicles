@@ -1,0 +1,28 @@
+/**
+ * Environment configuration. All env vars are validated at startup.
+ */
+
+const required = (key: string): string => {
+  const value = process.env[key];
+  if (value === undefined || value === '') {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+  return value;
+};
+
+const optional = (key: string, defaultValue: string): string => {
+  return process.env[key] ?? defaultValue;
+};
+
+export const env = {
+  NODE_ENV: optional('NODE_ENV', 'development'),
+  PORT: parseInt(optional('PORT', '4000'), 10),
+  DATABASE_URL: required('DATABASE_URL'),
+  JWT_SECRET: required('JWT_SECRET'),
+  SESSION_SECRET: optional('SESSION_SECRET', 'session-secret-change-in-production'),
+  GOOGLE_CLIENT_ID: optional('GOOGLE_CLIENT_ID', ''),
+  GOOGLE_CLIENT_SECRET: optional('GOOGLE_CLIENT_SECRET', ''),
+  FACEBOOK_APP_ID: optional('FACEBOOK_APP_ID', ''),
+  FACEBOOK_APP_SECRET: optional('FACEBOOK_APP_SECRET', ''),
+  DEV_AUTH_SECRET: optional('DEV_AUTH_SECRET', ''),
+} as const;

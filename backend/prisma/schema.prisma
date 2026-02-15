@@ -1,0 +1,86 @@
+// Vehicles - Fleet & Logistics Management
+// Prisma schema: users, organizations, login audit (auth); vehicles, drivers, trips (later)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  DRIVER
+  AUDITOR
+}
+
+enum UserStatus {
+  ACTIVE
+  PAUSED
+  FROZEN
+}
+
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("organizations")
+}
+
+model User {
+  id            String     @id @default(uuid())
+  email         String     @unique
+  name          String
+  picture       String?
+  provider      String     // "google" | "facebook" | "email"
+  providerId    String     // external id or email for email provider
+  passwordHash  String?    // for email/password auth
+  role          UserRole   @default(DRIVER)
+  status        UserStatus @default(ACTIVE)
+  orgId         String?
+  org           Organization? @relation(fields: [orgId], references: [id], onDelete: SetNull)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+
+  loginAudits        LoginAudit[]
+  passwordResetTokens PasswordResetToken[]
+
+  @@unique([provider, providerId])
+  @@index([email])
+  @@index([orgId])
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+  @@index([userId])
+  @@map("password_reset_tokens")
+}
+
+model LoginAudit {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String   // "LOGIN_SUCCESS" | "LOGIN_FAILED" | "LOGOUT"
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("login_audits")
+}
+
