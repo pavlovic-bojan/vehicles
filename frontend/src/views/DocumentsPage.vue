@@ -43,6 +43,7 @@
             <th>{{ $t('documents.fileName') }}</th>
             <th>{{ $t('documents.entityType') }}</th>
             <th>{{ $t('documents.entityId') }}</th>
+            <th>{{ $t('documents.uploadedBy') }}</th>
             <th>{{ $t('documents.fileUrl') }}</th>
             <th>{{ $t('documents.createdAt') }}</th>
             <th></th>
@@ -50,18 +51,19 @@
         </thead>
         <tbody>
           <tr v-if="loading" class="documents-page__row-loading" data-test="row-loading">
-            <td colspan="6">{{ $t('common.loading') }}</td>
+            <td colspan="7">{{ $t('common.loading') }}</td>
           </tr>
           <tr v-else-if="items.length === 0" class="documents-page__row-empty" data-test="row-empty">
-            <td colspan="6">{{ $t('documents.noDocuments') }}</td>
+            <td colspan="7">{{ $t('documents.noDocuments') }}</td>
           </tr>
           <tr v-else-if="searchQuery && filteredBySearch.length === 0" class="documents-page__row-empty" data-test="row-no-matches">
-            <td colspan="6">{{ $t('common.noMatches') }}</td>
+            <td colspan="7">{{ $t('common.noMatches') }}</td>
           </tr>
           <tr v-else v-for="d in paginatedItems" :key="d.id" :data-test="`row-document-${d.id}`">
             <td>{{ d.fileName }}</td>
             <td>{{ entityTypeLabel(d.entityType) }}</td>
             <td>{{ entityLabel(d) }}</td>
+            <td>{{ d.user?.name ?? d.user?.email ?? '—' }}</td>
             <td>
               <a v-if="d.fileUrl" :href="d.fileUrl" target="_blank" rel="noopener noreferrer" class="documents-page__link">{{ d.fileName }}</a>
               <span v-else>—</span>

@@ -2,7 +2,7 @@
 
 Pregled šta je implementirano u odnosu na PRD, BRD i `node_ts_roadmap.md` (MVP Phase 1 i Phase 2 stavke).
 
-**Poslednji update:** **Audit log** – paginacija (page, limit), pretraga po tekstu (debounce), sortabilne kolone (user, action, ip, userAgent, createdAt). **Reports** – redosled: naslov, date-time Od/Do, export CSV/PDF; **Trips by status** sa tabelom „Vožnje po organizaciji” (perOrg); **Fuel by vehicle** sa kolonom Organizacija, sort i paginacija; nova tabela **Parking & Service** (GET /api/reports/locations), sort i paginacija; CSV export proširen (org, lokacije).
+**Poslednji update:** **Documents** – u listi dokumenata kolona **„Uploaded by”** (ko je kreirao dokument). (Prethodno: Audit log – paginacija, pretraga, sort; Reports – date range, Trips po org, Fuel/Parking tabele sa org, sort, paginacija.)
 
 ---
 
@@ -44,7 +44,7 @@ Pregled šta je implementirano u odnosu na PRD, BRD i `node_ts_roadmap.md` (MVP 
 | Trips: isto | ✅ | `TripsPage.vue` |
 | Fuel: lista, dodavanje, brisanje, sort, pretraga, paginacija | ✅ | `FuelPage.vue` |
 | Locations (Parking/Service): CRUD, filter po tipu, pretraga, paginacija | ✅ | `LocationsPage.vue` |
-| **Document Management UI** | ✅ | `DocumentsPage.vue`, `documents.api.ts` – list, filter, add link, delete, **contentHash (SHA-256), Verify integrity**, ruta `/documents` |
+| **Document Management UI** | ✅ | `DocumentsPage.vue` – list (kolona **Uploaded by** – ko kreirao), filter, add link, delete, contentHash, Verify integrity, ruta `/documents` |
 | **Notifications stranica** | ✅ | `NotificationsPage.vue` – placeholder lista, ruta `/notifications` |
 | **Reports stranica** | ✅ | Date/time Od–Do, Učitaj izveštaj, export CSV/PDF; **Trips by status** + tabela „Vožnje po organizaciji”; **Fuel by vehicle** (kolona Organizacija, sort, paginacija); **Parking & Service** (tabela lokacija, sort, paginacija); Summary kartice |
 | **Audit log UI (admin)** | ✅ | `AuditLogPage.vue` – pretraga (debounce), sortabilne kolone, paginacija (rows per page), ruta `/audit`, nav samo za ADMIN |
@@ -90,7 +90,7 @@ Pregled šta je implementirano u odnosu na PRD, BRD i `node_ts_roadmap.md` (MVP 
   - **Reporting** – summary, fuel, trips (from/to), **locations** (parking & service); fuel sa kolonom Organizacija; trips sa **perOrg** (tabela po organizaciji); Reports stranica: date range, export CSV/PDF, Fuel i Parking & Service tabele sa sortom i paginacijom.
   - **Trailer management** – backend CRUD (Trailer), frontend Trailers stranica (CRUD, tabela, drawer).
   - **Seed** – 5 organizacija, u svakoj 150 vozila/vozača/prikolica/vožnji, 30 lokacija, 200 fuel, 150 dokumenata, login audit; pun reseed: `cd backend && npm run db:reset`.
-  - **File integrity / tampering detection (PRD 4.11)** – contentHash na dokumentu, verifikacija (fetch po fileUrl, uporedba SHA-256), audit log provera (`DocumentIntegrityLog`), UI: opciono polje contentHash pri dodavanju, dugme „Verify integrity” za dokumente sa hash-om i URL-om.
+  - **File integrity / tampering detection (PRD 4.11)** – contentHash na dokumentu, verifikacija (fetch po fileUrl, uporedba SHA-256), audit log provera (`DocumentIntegrityLog`), UI: opciono polje contentHash pri dodavanju, dugme „Verify integrity” za dokumente sa hash-om i URL-om; u listi dokumenata kolona **Uploaded by** (ko je kreirao dokument).
 
 - **Ostalo iz project-doc (Phase 2 / izuzeto):**
   1. **Real-time mapa** – Map view u frontendu (Leaflet/Mapbox + `/api/gps/positions`).
