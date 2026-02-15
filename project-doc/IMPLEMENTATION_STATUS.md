@@ -2,7 +2,7 @@
 
 Pregled šta je implementirano u odnosu na PRD, BRD i `node_ts_roadmap.md` (MVP Phase 1 i Phase 2 stavke).
 
-**Poslednji update:** File integrity / tampering detection (PRD 4.11) – backend: `contentHash` na Document, tabela `DocumentIntegrityLog`, endpoint `GET /api/documents/:id/verify-integrity`; frontend: opciono polje contentHash u formi za dokument, dugme „Verify integrity” (ikona štit) za dokumente koji imaju hash i fileUrl, rezultat provere u alertu.
+**Poslednji update:** Seed proširen na **5 organizacija**, u svakoj po **150 vozila, 150 vozača, 150 prikolica, 150 vožnji**, 30 lokacija, 200 fuel, 150 dokumenata, login audit; skripta **`npm run db:reset`** (db push --force-reset + seed) za punu bazu (projekat koristi `db push`, ne migracije).
 
 ---
 
@@ -31,7 +31,7 @@ Pregled šta je implementirano u odnosu na PRD, BRD i `node_ts_roadmap.md` (MVP 
 | GPS API (pozicije vozila) | ✅ | `gps.routes.ts` – mock pozicije za MVP |
 | Swagger / API docs | ✅ | `/api-docs` |
 | Unit & integration tests | ✅ | Vitest, `__tests__/` |
-| **Seed (baza puna podataka)** | ✅ | `prisma/seed.ts` – org, users, vehicles, trailers, drivers, locations, trips, fuel, documents, login audit |
+| **Seed (baza puna podataka)** | ✅ | `prisma/seed.ts` – **5 org**, u svakoj 150 vehicles/drivers/trailers/trips, 30 locations, 200 fuel, 150 docs, login audit; pun reseed: `npm run db:reset` (db push + seed) |
 
 ### Frontend
 | Zahtev | Status | Napomena |
@@ -89,7 +89,7 @@ Pregled šta je implementirano u odnosu na PRD, BRD i `node_ts_roadmap.md` (MVP 
   - **Audit log UI** – GET audit API, stranica Audit log za ADMIN na `/audit`.
   - **Reporting** – backend report endpointi (summary, fuel, trips), frontend Reports stranica sa grafovima i export CSV/PDF.
   - **Trailer management** – backend CRUD (Trailer), frontend Trailers stranica (CRUD, tabela, drawer).
-  - **Seed** – puna baza (org, users, vehicles, trailers, drivers, locations, trips, fuel, documents, login audit).
+  - **Seed** – 5 organizacija, u svakoj 150 vozila/vozača/prikolica/vožnji, 30 lokacija, 200 fuel, 150 dokumenata, login audit; pun reseed: `cd backend && npm run db:reset`.
   - **File integrity / tampering detection (PRD 4.11)** – contentHash na dokumentu, verifikacija (fetch po fileUrl, uporedba SHA-256), audit log provera (`DocumentIntegrityLog`), UI: opciono polje contentHash pri dodavanju, dugme „Verify integrity” za dokumente sa hash-om i URL-om.
 
 - **Ostalo iz project-doc (Phase 2 / izuzeto):**
