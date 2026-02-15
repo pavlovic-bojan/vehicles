@@ -41,25 +41,6 @@
           </div>
         </div>
         <p v-if="tripsReport.byStatus.length === 0" class="reports-page__no-data">{{ $t('reports.noData') }}</p>
-        <div v-if="tripsReport.perOrg.length > 0" class="reports-page__trips-by-org-wrap">
-          <h3 class="reports-page__trips-by-org-title">{{ $t('reports.tripsByOrganization') }}</h3>
-          <table class="reports-page__table reports-page__table--trips-org" data-test="table-trips-by-org">
-            <thead>
-              <tr>
-                <th>{{ $t('reports.organization') }}</th>
-                <th>{{ $t('reports.totalTrips') }}</th>
-                <th v-for="status in tripStatusOrder" :key="status">{{ formatTripStatus(status) }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="row in tripsReport.perOrg" :key="row.orgId" :data-test="`row-trips-org-${row.orgId}`">
-                <td>{{ row.orgName }}</td>
-                <td>{{ row.total }}</td>
-                <td v-for="status in tripStatusOrder" :key="status">{{ countForStatus(row.byStatus, status) }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
       </section>
       <section class="reports-page__section" data-test="section-summary">
         <h2 class="reports-page__section-title">{{ $t('reports.summary') }}</h2>
@@ -445,11 +426,6 @@ function formatCents(cents: number): string {
 
 const tripStatusOrder = ['PRE_TRIP', 'IN_PROGRESS', 'POST_TRIP', 'COMPLETED'];
 
-function countForStatus(byStatus: { status: string; count: number }[], status: string): number {
-  const item = byStatus.find((x) => x.status === status);
-  return item?.count ?? 0;
-}
-
 function formatTripStatus(status: string): string {
   const key = `reports.tripStatus.${status}`;
   const out = t(key);
@@ -559,9 +535,6 @@ onMounted(() => load());
 .reports-page__bar-fill { height: 100%; background: #1976d2; border-radius: 4px; min-width: 2px; }
 .reports-page__bar-value { font-size: 0.9rem; font-weight: 600; color: #333; text-align: right; }
 .reports-page__no-data { color: #888; font-size: 0.9rem; margin: 0; }
-.reports-page__trips-by-org-wrap { margin-top: 1.5rem; }
-.reports-page__trips-by-org-title { font-size: 1rem; font-weight: 600; margin: 0 0 0.75rem; color: #333; }
-.reports-page__table--trips-org { margin-top: 0; }
 .reports-page__period { font-size: 0.9rem; color: #666; margin: 0 0 1rem; }
 
 @media print {

@@ -441,7 +441,6 @@ html.dark-theme .reports-page__select { background: #2d2d2d; border-color: #555;
 html.dark-theme .reports-page__total,
 html.dark-theme .reports-page__bar-label,
 html.dark-theme .reports-page__bar-value { color: #e0e0e0; }
-html.dark-theme .reports-page__trips-by-org-title { color: #e0e0e0; }
 html.dark-theme .reports-page__bar-track { background: #3d3d3d; }
 html.dark-theme .reports-page__no-data { color: #888; }
 html.dark-theme .reports-page__period { color: #b0b0b0; }
