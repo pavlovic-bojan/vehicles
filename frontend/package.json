@@ -13,6 +13,7 @@
   "dependencies": {
     "@quasar/extras": "^1.16.6",
     "axios": "^1.7.7",
+    "lucide-vue-next": "^0.564.0",
     "pinia": "^2.2.4",
     "quasar": "^2.16.3",
     "vue": "^3.5.12",
@@ -21,12 +22,12 @@
   },
   "devDependencies": {
     "@quasar/vite-plugin": "^1.4.0",
-    "@vitejs/plugin-vue": "^5.1.4",
     "@types/node": "^22.9.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.1",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",
-    "vitest": "^2.1.4",
-    "@vue/test-utils": "^2.4.6",
-    "jsdom": "^25.0.1"
+    "vitest": "^2.1.4"
   }
 }

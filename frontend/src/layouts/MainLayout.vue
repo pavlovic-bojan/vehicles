@@ -2,19 +2,20 @@
   <div class="main-layout" :class="{ 'main-layout--dark': isDark }">
     <header class="main-layout__header">
       <button type="button" class="main-layout__menu-btn" aria-label="Toggle menu" data-test="button-menu-toggle" @click="sidebarOpen = !sidebarOpen">
-        <span class="main-layout__menu-icon"></span>
-        <span class="main-layout__menu-icon"></span>
-        <span class="main-layout__menu-icon"></span>
+        <Menu class="main-layout__menu-svg" :size="22" stroke-width="2" />
       </button>
       <div class="main-layout__logo" data-test="app-logo">
-        <span class="main-layout__logo-small">{{ $t('layout.logoSmall') }}</span>
-        <span class="main-layout__logo-title">{{ $t('layout.logoTitle') }}</span>
+        <img src="/logo.png" alt="Vehicles" class="main-layout__logo-img" width="36" height="36" />
+        <span class="main-layout__logo-text">
+          <span class="main-layout__logo-small">{{ $t('layout.logoSmall') }}</span>
+          <span class="main-layout__logo-title">{{ $t('layout.logoTitle') }}</span>
+        </span>
       </div>
       <div class="main-layout__header-right">
         <div class="main-layout__lang-wrap" data-test="dropdown-language">
           <button type="button" class="main-layout__icon-btn main-layout__icon-btn--lang" data-test="button-language" @click="langOpen = !langOpen">
             <span class="main-layout__flag" :aria-label="currentLangLabel">{{ currentLangFlag }}</span>
-            <span class="main-layout__arrow">▼</span>
+            <ChevronDown class="main-layout__chevron" :size="16" stroke-width="2" />
           </button>
           <div v-if="langOpen" class="main-layout__dropdown" data-test="dropdown-language-menu">
             <button v-for="opt in langOptions" :key="opt.locale" type="button" class="main-layout__dropdown-item main-layout__dropdown-item--lang" :data-test="`lang-${opt.locale}`" @click="setLocale(opt.locale); langOpen = false">
@@ -23,24 +24,31 @@
             </button>
           </div>
         </div>
-        <button type="button" class="main-layout__icon-btn" :aria-label="$t('layout.darkMode')" data-test="button-dark-mode" @click="isDark = !isDark">
-          {{ isDark ? '☀' : '☽' }}
+        <button type="button" class="main-layout__icon-btn main-layout__icon-btn--icon" :aria-label="$t('layout.darkMode')" data-test="button-dark-mode" @click="isDark = !isDark">
+          <Sun v-if="!isDark" class="main-layout__header-icon" :size="20" stroke-width="2" />
+          <Moon v-else class="main-layout__header-icon" :size="20" stroke-width="2" />
         </button>
-        <button type="button" class="main-layout__icon-btn" :aria-label="$t('layout.notifications')" data-test="button-notifications">
-          🔔
+        <button type="button" class="main-layout__icon-btn main-layout__icon-btn--icon" :aria-label="$t('layout.notifications')" data-test="button-notifications">
+          <Bell class="main-layout__header-icon" :size="20" stroke-width="2" />
         </button>
         <div class="main-layout__user-wrap" data-test="dropdown-user">
           <button type="button" class="main-layout__user-btn" data-test="button-user-menu" @click="userOpen = !userOpen">
             <span class="main-layout__avatar">{{ userInitials }}</span>
-            <span class="main-layout__arrow">▼</span>
+            <ChevronDown class="main-layout__chevron" :size="16" stroke-width="2" />
           </button>
           <div v-if="userOpen" class="main-layout__dropdown main-layout__dropdown--user" data-test="dropdown-user-menu">
             <div class="main-layout__user-info">
               <strong>{{ authStore.user?.name }}</strong>
               <span class="main-layout__user-role">{{ $t('layout.role') }}: {{ authStore.user?.role }}</span>
             </div>
-            <router-link :to="{ name: 'dashboard' }" class="main-layout__dropdown-item" data-test="link-profile" @click="userOpen = false">{{ $t('layout.profile') }}</router-link>
-            <button type="button" class="main-layout__dropdown-item main-layout__dropdown-item--danger" data-test="button-logout" @click="logout">{{ $t('auth.logout') }}</button>
+            <router-link :to="{ name: 'dashboard' }" class="main-layout__dropdown-item main-layout__dropdown-item--with-icon" data-test="link-profile" @click="userOpen = false">
+              <User class="main-layout__dropdown-icon" :size="18" stroke-width="2" />
+              {{ $t('layout.profile') }}
+            </router-link>
+            <button type="button" class="main-layout__dropdown-item main-layout__dropdown-item--danger main-layout__dropdown-item--with-icon" data-test="button-logout" @click="logout">
+              <LogOut class="main-layout__dropdown-icon" :size="18" stroke-width="2" />
+              {{ $t('auth.logout') }}
+            </button>
           </div>
         </div>
       </div>
@@ -51,7 +59,7 @@
         <div class="main-layout__nav-label">{{ $t('layout.navigation') }}</div>
         <nav class="main-layout__nav">
         <router-link v-for="item in navItems" :key="item.name" :to="item.to" class="main-layout__nav-item" :class="{ 'main-layout__nav-item--active': isActive(item.to) }" :data-test="`nav-${item.name}`" @click="sidebarOpen = false">
-          <span class="main-layout__nav-icon">{{ item.icon }}</span>
+          <component :is="item.icon" class="main-layout__nav-icon-svg" :size="20" stroke-width="2" />
           <span>{{ $t(item.label) }}</span>
         </router-link>
         </nav>
@@ -69,6 +77,20 @@ import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from 'vue-i18n';
 import { useAuthStore } from '../stores/authStore';
+import {
+  Menu,
+  ChevronDown,
+  Sun,
+  Moon,
+  Bell,
+  User,
+  LogOut,
+  LayoutDashboard,
+  Truck,
+  Users,
+  Route,
+  BellRing,
+} from 'lucide-vue-next';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -89,11 +111,11 @@ const currentLangFlag = computed(() => langOptions.find((o) => o.locale === loca
 const currentLangLabel = computed(() => langOptions.find((o) => o.locale === locale.value)?.label ?? 'English');
 
 const navItems = [
-  { name: 'dashboard', to: '/', label: 'layout.dashboard', icon: '📋' },
-  { name: 'vehicles', to: '/vehicles', label: 'layout.vehicles', icon: '🚚' },
-  { name: 'drivers', to: '/drivers', label: 'layout.drivers', icon: '👤' },
-  { name: 'trips', to: '/trips', label: 'layout.trips', icon: '🛣' },
-  { name: 'notifications', to: '/notifications', label: 'layout.notifications', icon: '🔔' },
+  { name: 'dashboard', to: '/', label: 'layout.dashboard', icon: LayoutDashboard },
+  { name: 'vehicles', to: '/vehicles', label: 'layout.vehicles', icon: Truck },
+  { name: 'drivers', to: '/drivers', label: 'layout.drivers', icon: Users },
+  { name: 'trips', to: '/trips', label: 'layout.trips', icon: Route },
+  { name: 'notifications', to: '/notifications', label: 'layout.notifications', icon: BellRing },
 ];
 
 const userInitials = computed(() => {
@@ -153,10 +175,12 @@ onUnmounted(() => {
 .main-layout__body { display: flex; flex: 1; min-height: 0; }
 .main-layout__header { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: #fff; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 100; }
 .main-layout--dark .main-layout__header { background: #2d2d2d; border-color: #444; }
-.main-layout__menu-btn { display: flex; flex-direction: column; gap: 4px; padding: 8px; border: none; background: transparent; cursor: pointer; }
-.main-layout__menu-icon { width: 20px; height: 2px; background: #333; }
-.main-layout--dark .main-layout__menu-icon { background: #ccc; }
-.main-layout__logo { display: flex; flex-direction: column; }
+.main-layout__menu-btn { display: flex; align-items: center; justify-content: center; padding: 8px; border: none; background: transparent; cursor: pointer; color: inherit; }
+.main-layout__menu-svg { flex-shrink: 0; }
+.main-layout--dark .main-layout__menu-svg { color: #e0e0e0; }
+.main-layout__logo { display: flex; align-items: center; gap: 0.5rem; }
+.main-layout__logo-img { display: block; flex-shrink: 0; object-fit: contain; }
+.main-layout__logo-text { display: flex; flex-direction: column; line-height: 1.2; }
 .main-layout__logo-small { font-size: 0.75rem; color: #666; }
 .main-layout__logo-title { font-size: 1.1rem; font-weight: 600; }
 .main-layout__header-right { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
@@ -165,9 +189,13 @@ onUnmounted(() => {
 .main-layout__lang-wrap, .main-layout__user-wrap { position: relative; }
 .main-layout__flag { font-size: 1.25rem; line-height: 1; margin-right: 4px; }
 .main-layout__icon-btn--lang { display: flex; align-items: center; gap: 0.25rem; }
+.main-layout__icon-btn--icon { display: inline-flex; align-items: center; justify-content: center; padding: 0.5rem; }
+.main-layout__header-icon { flex-shrink: 0; }
+.main-layout__chevron { flex-shrink: 0; opacity: 0.8; }
 .main-layout__dropdown-item--lang { display: flex; align-items: center; gap: 0.5rem; }
+.main-layout__dropdown-item--with-icon { display: flex; align-items: center; gap: 0.5rem; }
+.main-layout__dropdown-icon { flex-shrink: 0; }
 .main-layout__flag-option { font-size: 1.25rem; line-height: 1; }
-.main-layout__arrow { font-size: 0.6rem; }
 .main-layout__user-btn { display: flex; align-items: center; gap: 0.25rem; padding: 0.25rem 0.5rem; border: 1px solid #ddd; border-radius: 20px; background: #fff; cursor: pointer; }
 .main-layout__avatar { width: 28px; height: 28px; border-radius: 50%; background: #1976d2; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 600; }
 .main-layout__dropdown { position: absolute; top: 100%; right: 0; margin-top: 4px; min-width: 160px; background: #fff; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; }
@@ -190,7 +218,7 @@ onUnmounted(() => {
 .main-layout--dark .main-layout__nav-item { color: #e0e0e0; }
 .main-layout--dark .main-layout__nav-item:hover { background: #3d3d3d; }
 .main-layout--dark .main-layout__nav-item--active { background: #1a3a52; color: #64b5f6; }
-.main-layout__nav-icon { font-size: 1rem; }
+.main-layout__nav-icon-svg { flex-shrink: 0; }
 .main-layout__content { flex: 1; display: flex; flex-direction: column; padding: 1.5rem; overflow: auto; min-width: 0; }
 .main-layout--dark .main-layout__content { background: #1e1e1e; }
 .main-layout--dark .main-layout__body { background: #1e1e1e; }

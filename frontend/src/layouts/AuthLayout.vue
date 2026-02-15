@@ -1,6 +1,7 @@
 <template>
   <div class="auth-layout">
     <div class="auth-layout__left">
+      <img src="/logo.png" alt="Vehicles" class="auth-layout__logo" width="80" height="80" />
       <h1 class="auth-layout__title" data-test="auth-welcome">{{ $t('auth.welcomeTo') }}</h1>
       <p class="auth-layout__subtitle" data-test="auth-subtitle">{{ $t('auth.subtitle') }}</p>
     </div>
@@ -32,6 +33,11 @@
   align-items: center;
   padding: 2rem;
   text-align: center;
+}
+.auth-layout__logo {
+  display: block;
+  margin-bottom: 1rem;
+  object-fit: contain;
 }
 .auth-layout__title {
   font-size: 1.75rem;

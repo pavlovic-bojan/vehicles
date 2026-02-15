@@ -20,8 +20,10 @@
         <tbody>
           <tr v-if="loading" class="dashboard__row-loading" data-test="row-loading">
             <td colspan="5">
-              <span class="dashboard__loading-icon" data-test="loading-icon">⚠</span>
-              <span class="dashboard__loading-text" data-test="loading-text">{{ $t('common.loading') }}</span>
+              <span class="dashboard__loading-inner">
+                <Loader2 class="dashboard__loading-icon" data-test="loading-icon" :size="20" stroke-width="2" />
+                <span class="dashboard__loading-text" data-test="loading-text">{{ $t('common.loading') }}</span>
+              </span>
             </td>
           </tr>
           <tr v-else-if="items.length === 0" class="dashboard__row-empty" data-test="row-empty">
@@ -42,6 +44,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { Loader2 } from 'lucide-vue-next';
 
 const loading = ref(true);
 const items = ref<{ id: string; title: string; reportedBy: string; institution: string; date: string; status: string }[]>([]);
@@ -67,6 +70,8 @@ onMounted(() => {
 .dashboard__table th { text-align: left; padding: 0.75rem 1rem; background: #f5f5f5; font-size: 0.8rem; font-weight: 600; color: #666; }
 .dashboard__table td { padding: 0.75rem 1rem; border-top: 1px solid #eee; font-size: 0.9rem; }
 .dashboard__row-loading td { text-align: center; padding: 2rem; color: #888; }
-.dashboard__loading-icon { display: inline-block; margin-right: 0.5rem; font-size: 1.25rem; }
+.dashboard__loading-inner { display: inline-flex; align-items: center; gap: 0.5rem; }
+.dashboard__loading-icon { flex-shrink: 0; animation: dashboard-spin 0.8s linear infinite; }
+@keyframes dashboard-spin { to { transform: rotate(360deg); } }
 .dashboard__row-empty td { text-align: center; padding: 2rem; color: #888; }
 </style>
