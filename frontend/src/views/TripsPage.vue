@@ -3,6 +3,29 @@
     <h1 class="trips-page__title" data-test="trips-title">{{ $t('trips.title') }}</h1>
     <p class="trips-page__subtitle" data-test="trips-subtitle">{{ $t('trips.subtitle') }}</p>
     <div class="trips-page__actions">
+      <div class="trips-page__search-wrap">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="trips-page__search"
+          :placeholder="$t('common.searchPlaceholder')"
+          data-test="input-search"
+          autocomplete="off"
+          @focus="showAutocomplete = true"
+          @blur="onSearchBlur"
+        />
+        <ul v-if="showAutocomplete && searchQuery && autocompleteSuggestions.length" class="trips-page__autocomplete" data-test="autocomplete-list">
+          <li
+            v-for="t in autocompleteSuggestions"
+            :key="t.id"
+            class="trips-page__autocomplete-item"
+            data-test="autocomplete-item"
+            @mousedown.prevent="selectSuggestion(t)"
+          >
+            {{ rowSummary(t) }}
+          </li>
+        </ul>
+      </div>
       <button type="button" class="trips-page__btn trips-page__btn--primary" data-test="button-add-trip" @click="openDrawer()">
         {{ $t('trips.addTrip') }}
       </button>
@@ -11,11 +34,21 @@
       <table class="trips-page__table" data-test="table-trips">
         <thead>
           <tr>
-            <th>{{ $t('trips.vehicle') }}</th>
-            <th>{{ $t('trips.driver') }}</th>
-            <th>{{ $t('trips.startAt') }}</th>
-            <th>{{ $t('trips.endAt') }}</th>
-            <th>{{ $t('trips.status') }}</th>
+            <th class="trips-page__th--sortable" :class="{ 'trips-page__th--sorted': sortKey === 'vehicleLabel' }" @click="setSort('vehicleLabel')">
+              {{ $t('trips.vehicle') }} <ChevronUp v-if="sortKey === 'vehicleLabel' && sortOrder === 'asc'" :size="14" class="trips-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'vehicleLabel' && sortOrder === 'desc'" :size="14" class="trips-page__sort-icon" /><span v-else class="trips-page__sort-placeholder">↕</span>
+            </th>
+            <th class="trips-page__th--sortable" :class="{ 'trips-page__th--sorted': sortKey === 'driverLabel' }" @click="setSort('driverLabel')">
+              {{ $t('trips.driver') }} <ChevronUp v-if="sortKey === 'driverLabel' && sortOrder === 'asc'" :size="14" class="trips-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'driverLabel' && sortOrder === 'desc'" :size="14" class="trips-page__sort-icon" /><span v-else class="trips-page__sort-placeholder">↕</span>
+            </th>
+            <th class="trips-page__th--sortable" :class="{ 'trips-page__th--sorted': sortKey === 'startAt' }" @click="setSort('startAt')">
+              {{ $t('trips.startAt') }} <ChevronUp v-if="sortKey === 'startAt' && sortOrder === 'asc'" :size="14" class="trips-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'startAt' && sortOrder === 'desc'" :size="14" class="trips-page__sort-icon" /><span v-else class="trips-page__sort-placeholder">↕</span>
+            </th>
+            <th class="trips-page__th--sortable" :class="{ 'trips-page__th--sorted': sortKey === 'endAt' }" @click="setSort('endAt')">
+              {{ $t('trips.endAt') }} <ChevronUp v-if="sortKey === 'endAt' && sortOrder === 'asc'" :size="14" class="trips-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'endAt' && sortOrder === 'desc'" :size="14" class="trips-page__sort-icon" /><span v-else class="trips-page__sort-placeholder">↕</span>
+            </th>
+            <th class="trips-page__th--sortable" :class="{ 'trips-page__th--sorted': sortKey === 'status' }" @click="setSort('status')">
+              {{ $t('trips.status') }} <ChevronUp v-if="sortKey === 'status' && sortOrder === 'asc'" :size="14" class="trips-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'status' && sortOrder === 'desc'" :size="14" class="trips-page__sort-icon" /><span v-else class="trips-page__sort-placeholder">↕</span>
+            </th>
             <th></th>
           </tr>
         </thead>
@@ -26,15 +59,18 @@
           <tr v-else-if="items.length === 0" class="trips-page__row-empty" data-test="row-empty">
             <td colspan="6">{{ $t('trips.noTrips') }}</td>
           </tr>
-          <tr v-else v-for="t in items" :key="t.id" :data-test="`row-trip-${t.id}`">
+          <tr v-else-if="searchQuery && filteredBySearch.length === 0" class="trips-page__row-empty" data-test="row-no-matches">
+            <td colspan="6">{{ $t('common.noMatches') }}</td>
+          </tr>
+          <tr v-else v-for="t in filteredBySearch" :key="t.id" :data-test="`row-trip-${t.id}`">
             <td>{{ vehicleLabel(t) }}</td>
             <td>{{ driverLabel(t) }}</td>
             <td>{{ formatDateTime(t.startAt) }}</td>
             <td>{{ t.endAt ? formatDateTime(t.endAt) : '—' }}</td>
             <td>{{ $t(statusLabel(t.status)) }}</td>
-            <td>
-              <button type="button" class="trips-page__btn trips-page__btn--small" data-test="button-edit-trip" @click="openDrawer(t)">{{ $t('trips.editTrip') }}</button>
-              <button type="button" class="trips-page__btn trips-page__btn--small trips-page__btn--danger" :data-test="`button-delete-trip-${t.id}`" @click="confirmDelete(t)">{{ $t('common.delete') }}</button>
+            <td class="trips-page__cell-actions">
+              <button type="button" class="trips-page__btn trips-page__btn--icon" :aria-label="$t('trips.editTrip')" data-test="button-edit-trip" @click="openDrawer(t)"><Pencil :size="18" stroke-width="2" /></button>
+              <button type="button" class="trips-page__btn trips-page__btn--icon trips-page__btn--danger" :aria-label="$t('common.delete')" :data-test="`button-delete-trip-${t.id}`" @click="confirmDelete(t)"><Trash2 :size="18" stroke-width="2" /></button>
             </td>
           </tr>
         </tbody>
@@ -44,7 +80,10 @@
     <div v-if="drawerOpen" class="trips-page__drawer-overlay" data-test="drawer-overlay" @click="closeDrawer"></div>
     <aside class="trips-page__drawer" :class="{ 'trips-page__drawer--open': drawerOpen }" data-test="drawer">
       <div class="trips-page__drawer-inner">
-        <h2 class="trips-page__drawer-title" data-test="drawer-title">{{ editingId ? $t('trips.editTrip') : $t('trips.addTrip') }}</h2>
+        <div class="trips-page__drawer-header">
+          <h2 class="trips-page__drawer-title" data-test="drawer-title">{{ editingId ? $t('trips.editTrip') : $t('trips.addTrip') }}</h2>
+          <button type="button" class="trips-page__drawer-close" aria-label="Close" data-test="button-close-drawer" @click="closeDrawer">×</button>
+        </div>
         <form class="trips-page__form" data-test="form-trip" @submit.prevent="submitForm">
           <label class="trips-page__label">{{ $t('trips.vehicle') }} *</label>
           <select v-model="form.vehicleId" class="trips-page__input" data-test="select-vehicle" required :disabled="!!editingId">
@@ -95,13 +134,79 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { tripsApi, type Trip, type TripStatus } from '../api/trips.api';
 import { vehiclesApi } from '../api/vehicles.api';
 import { driversApi, type Driver } from '../api/drivers.api';
 
+const { t } = useI18n();
 const loading = ref(true);
 const items = ref<Trip[]>([]);
+const sortKey = ref<'vehicleLabel' | 'driverLabel' | 'startAt' | 'endAt' | 'status'>('startAt');
+const sortOrder = ref<'asc' | 'desc'>('desc');
+const searchQuery = ref('');
+const showAutocomplete = ref(false);
+
+function getTripSortValue(t: Trip, key: string): string | number {
+  if (key === 'vehicleLabel') return vehicleLabel(t);
+  if (key === 'driverLabel') return driverLabel(t);
+  if (key === 'startAt' || key === 'endAt') return new Date((t as Record<string, unknown>)[key] as string).getTime();
+  return (t as Record<string, unknown>)[key] as string;
+}
+
+const sortedItems = computed(() => {
+  const key = sortKey.value;
+  if (!key || !items.value.length) return items.value;
+  return [...items.value].sort((a, b) => {
+    const va = getTripSortValue(a, key);
+    const vb = getTripSortValue(b, key);
+    const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
+    return sortOrder.value === 'asc' ? cmp : -cmp;
+  });
+});
+
+function setSort(key: 'vehicleLabel' | 'driverLabel' | 'startAt' | 'endAt' | 'status') {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = key === 'startAt' || key === 'endAt' ? 'desc' : 'asc';
+  }
+}
+
+function searchableString(trip: Trip): string {
+  return [
+    vehicleLabel(trip),
+    driverLabel(trip),
+    formatDateTime(trip.startAt),
+    trip.endAt ? formatDateTime(trip.endAt) : '',
+    t(statusLabel(trip.status)),
+  ].join(' ').toLowerCase();
+}
+
+const filteredBySearch = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return sortedItems.value;
+  return sortedItems.value.filter((trip) => searchableString(trip).includes(q));
+});
+
+const autocompleteSuggestions = computed(() => filteredBySearch.value.slice(0, 8));
+
+function rowSummary(trip: Trip): string {
+  return `${vehicleLabel(trip)} – ${driverLabel(trip)} ${formatDateTime(trip.startAt)}`;
+}
+
+function selectSuggestion(trip: Trip) {
+  searchQuery.value = rowSummary(trip);
+  showAutocomplete.value = false;
+}
+
+function onSearchBlur() {
+  setTimeout(() => { showAutocomplete.value = false; }, 150);
+}
+
 const vehicles = ref<{ id: string; make: string; model: string; registration: string | null }[]>([]);
 const drivers = ref<Driver[]>([]);
 const drawerOpen = ref(false);
@@ -241,22 +346,38 @@ onMounted(() => load());
 .trips-page { width: 100%; }
 .trips-page__title { font-size: 1.75rem; font-weight: 600; margin: 0 0 0.25rem; color: #333; }
 .trips-page__subtitle { font-size: 0.9rem; color: #666; margin: 0 0 1.5rem; }
-.trips-page__actions { margin-bottom: 1rem; }
+.trips-page__actions { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.trips-page__search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+.trips-page__search { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+.trips-page__autocomplete { position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 0; list-style: none; background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 240px; overflow-y: auto; z-index: 10; }
+.trips-page__autocomplete-item { padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.9rem; }
+.trips-page__autocomplete-item:hover { background: #f0f0f0; }
 .trips-page__btn { padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent; }
 .trips-page__btn--primary { background: #1976d2; color: #fff; }
 .trips-page__btn--secondary { background: #f5f5f5; color: #333; border-color: #ddd; }
 .trips-page__btn--danger { background: #c62828; color: #fff; }
 .trips-page__btn--small { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.trips-page__cell-actions { display: flex; align-items: center; gap: 0.25rem; }
+.trips-page__btn--icon { padding: 0.4rem; min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.trips-page__btn--icon:hover { opacity: 0.9; }
 .trips-page__table-wrap { border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden; background: #fff; }
 .trips-page__table { width: 100%; border-collapse: collapse; }
 .trips-page__table th { text-align: left; padding: 0.75rem 1rem; background: #f5f5f5; font-size: 0.8rem; font-weight: 600; color: #666; }
+.trips-page__th--sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.trips-page__th--sortable:hover { background: #eee; }
+.trips-page__th--sorted { color: #1976d2; }
+.trips-page__sort-icon { display: inline-block; vertical-align: middle; margin-left: 2px; }
+.trips-page__sort-placeholder { display: inline-block; opacity: 0.35; font-size: 0.7rem; margin-left: 2px; }
 .trips-page__table td { padding: 0.75rem 1rem; border-top: 1px solid #eee; font-size: 0.9rem; }
 .trips-page__row-loading td, .trips-page__row-empty td { text-align: center; padding: 2rem; color: #888; }
 .trips-page__drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; }
 .trips-page__drawer { position: fixed; top: 0; right: 0; width: 400px; max-width: 100%; height: 100%; background: #fff; box-shadow: -2px 0 12px rgba(0,0,0,0.15); z-index: 101; transform: translateX(100%); transition: transform 0.2s; }
 .trips-page__drawer--open { transform: translateX(0); }
 .trips-page__drawer-inner { padding: 1.5rem; }
-.trips-page__drawer-title { font-size: 1.25rem; margin: 0 0 1rem; }
+.trips-page__drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.trips-page__drawer-title { font-size: 1.25rem; margin: 0; }
+.trips-page__drawer-close { width: 32px; height: 32px; padding: 0; border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: #666; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.trips-page__drawer-close:hover { background: #f0f0f0; color: #333; }
 .trips-page__form { display: flex; flex-direction: column; gap: 0.75rem; }
 .trips-page__form-group { display: flex; flex-direction: column; gap: 0.75rem; }
 .trips-page__label { font-size: 0.875rem; font-weight: 500; color: #333; }

@@ -3,6 +3,29 @@
     <h1 class="vehicles-page__title" data-test="vehicles-title">{{ $t('vehicles.title') }}</h1>
     <p class="vehicles-page__subtitle" data-test="vehicles-subtitle">{{ $t('vehicles.subtitle') }}</p>
     <div class="vehicles-page__actions">
+      <div class="vehicles-page__search-wrap">
+        <input
+          v-model="searchQuery"
+          type="text"
+          class="vehicles-page__search"
+          :placeholder="$t('common.searchPlaceholder')"
+          data-test="input-search"
+          autocomplete="off"
+          @focus="showAutocomplete = true"
+          @blur="onSearchBlur"
+        />
+        <ul v-if="showAutocomplete && searchQuery && autocompleteSuggestions.length" class="vehicles-page__autocomplete" data-test="autocomplete-list">
+          <li
+            v-for="v in autocompleteSuggestions"
+            :key="v.id"
+            class="vehicles-page__autocomplete-item"
+            data-test="autocomplete-item"
+            @mousedown.prevent="selectSuggestion(v)"
+          >
+            {{ rowSummary(v) }}
+          </li>
+        </ul>
+      </div>
       <button type="button" class="vehicles-page__btn vehicles-page__btn--primary" data-test="button-add-vehicle" @click="openDrawer()">
         {{ $t('vehicles.addVehicle') }}
       </button>
@@ -11,12 +34,24 @@
       <table class="vehicles-page__table" data-test="table-vehicles">
         <thead>
           <tr>
-            <th>{{ $t('vehicles.make') }}</th>
-            <th>{{ $t('vehicles.model') }}</th>
-            <th>{{ $t('vehicles.vin') }}</th>
-            <th>{{ $t('vehicles.registration') }}</th>
-            <th>{{ $t('vehicles.mileage') }}</th>
-            <th>{{ $t('vehicles.status') }}</th>
+            <th class="vehicles-page__th--sortable" :class="{ 'vehicles-page__th--sorted': sortKey === 'make' }" @click="setSort('make')">
+              {{ $t('vehicles.make') }} <ChevronUp v-if="sortKey === 'make' && sortOrder === 'asc'" :size="14" class="vehicles-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'make' && sortOrder === 'desc'" :size="14" class="vehicles-page__sort-icon" /><span v-else class="vehicles-page__sort-placeholder">↕</span>
+            </th>
+            <th class="vehicles-page__th--sortable" :class="{ 'vehicles-page__th--sorted': sortKey === 'model' }" @click="setSort('model')">
+              {{ $t('vehicles.model') }} <ChevronUp v-if="sortKey === 'model' && sortOrder === 'asc'" :size="14" class="vehicles-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'model' && sortOrder === 'desc'" :size="14" class="vehicles-page__sort-icon" /><span v-else class="vehicles-page__sort-placeholder">↕</span>
+            </th>
+            <th class="vehicles-page__th--sortable" :class="{ 'vehicles-page__th--sorted': sortKey === 'vin' }" @click="setSort('vin')">
+              {{ $t('vehicles.vin') }} <ChevronUp v-if="sortKey === 'vin' && sortOrder === 'asc'" :size="14" class="vehicles-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'vin' && sortOrder === 'desc'" :size="14" class="vehicles-page__sort-icon" /><span v-else class="vehicles-page__sort-placeholder">↕</span>
+            </th>
+            <th class="vehicles-page__th--sortable" :class="{ 'vehicles-page__th--sorted': sortKey === 'registration' }" @click="setSort('registration')">
+              {{ $t('vehicles.registration') }} <ChevronUp v-if="sortKey === 'registration' && sortOrder === 'asc'" :size="14" class="vehicles-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'registration' && sortOrder === 'desc'" :size="14" class="vehicles-page__sort-icon" /><span v-else class="vehicles-page__sort-placeholder">↕</span>
+            </th>
+            <th class="vehicles-page__th--sortable" :class="{ 'vehicles-page__th--sorted': sortKey === 'mileage' }" @click="setSort('mileage')">
+              {{ $t('vehicles.mileage') }} <ChevronUp v-if="sortKey === 'mileage' && sortOrder === 'asc'" :size="14" class="vehicles-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'mileage' && sortOrder === 'desc'" :size="14" class="vehicles-page__sort-icon" /><span v-else class="vehicles-page__sort-placeholder">↕</span>
+            </th>
+            <th class="vehicles-page__th--sortable" :class="{ 'vehicles-page__th--sorted': sortKey === 'status' }" @click="setSort('status')">
+              {{ $t('vehicles.status') }} <ChevronUp v-if="sortKey === 'status' && sortOrder === 'asc'" :size="14" class="vehicles-page__sort-icon" /><ChevronDown v-else-if="sortKey === 'status' && sortOrder === 'desc'" :size="14" class="vehicles-page__sort-icon" /><span v-else class="vehicles-page__sort-placeholder">↕</span>
+            </th>
             <th></th>
           </tr>
         </thead>
@@ -27,16 +62,19 @@
           <tr v-else-if="items.length === 0" class="vehicles-page__row-empty" data-test="row-empty">
             <td colspan="7">{{ $t('vehicles.noVehicles') }}</td>
           </tr>
-          <tr v-else v-for="v in items" :key="v.id" :data-test="`row-vehicle-${v.id}`">
+          <tr v-else-if="searchQuery && filteredBySearch.length === 0" class="vehicles-page__row-empty" data-test="row-no-matches">
+            <td colspan="7">{{ $t('common.noMatches') }}</td>
+          </tr>
+          <tr v-else v-for="v in filteredBySearch" :key="v.id" :data-test="`row-vehicle-${v.id}`">
             <td>{{ v.make }}</td>
             <td>{{ v.model }}</td>
             <td>{{ v.vin || '—' }}</td>
             <td>{{ v.registration || '—' }}</td>
             <td>{{ v.mileage }}</td>
             <td>{{ $t(statusLabel(v.status)) }}</td>
-            <td>
-              <button type="button" class="vehicles-page__btn vehicles-page__btn--small" data-test="button-edit-vehicle" @click="openDrawer(v)">{{ $t('vehicles.editVehicle') }}</button>
-              <button type="button" class="vehicles-page__btn vehicles-page__btn--small vehicles-page__btn--danger" :data-test="`button-delete-vehicle-${v.id}`" @click="confirmDelete(v)">{{ $t('common.delete') }}</button>
+            <td class="vehicles-page__cell-actions">
+              <button type="button" class="vehicles-page__btn vehicles-page__btn--icon" :aria-label="$t('vehicles.editVehicle')" data-test="button-edit-vehicle" @click="openDrawer(v)"><Pencil :size="18" stroke-width="2" /></button>
+              <button type="button" class="vehicles-page__btn vehicles-page__btn--icon vehicles-page__btn--danger" :aria-label="$t('common.delete')" :data-test="`button-delete-vehicle-${v.id}`" @click="confirmDelete(v)"><Trash2 :size="18" stroke-width="2" /></button>
             </td>
           </tr>
         </tbody>
@@ -47,7 +85,10 @@
     <div v-if="drawerOpen" class="vehicles-page__drawer-overlay" data-test="drawer-overlay" @click="closeDrawer"></div>
     <aside class="vehicles-page__drawer" :class="{ 'vehicles-page__drawer--open': drawerOpen }" data-test="drawer">
       <div class="vehicles-page__drawer-inner">
-        <h2 class="vehicles-page__drawer-title" data-test="drawer-title">{{ editingId ? $t('vehicles.editVehicle') : $t('vehicles.addVehicle') }}</h2>
+        <div class="vehicles-page__drawer-header">
+          <h2 class="vehicles-page__drawer-title" data-test="drawer-title">{{ editingId ? $t('vehicles.editVehicle') : $t('vehicles.addVehicle') }}</h2>
+          <button type="button" class="vehicles-page__drawer-close" aria-label="Close" data-test="button-close-drawer" @click="closeDrawer">×</button>
+        </div>
         <form class="vehicles-page__form" data-test="form-vehicle" @submit.prevent="submitForm">
           <label class="vehicles-page__label">{{ $t('vehicles.make') }} *</label>
           <input v-model="form.make" type="text" class="vehicles-page__input" data-test="input-make" required />
@@ -89,11 +130,70 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import { useI18n } from 'vue-i18n';
+import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { vehiclesApi, type Vehicle, type VehicleStatus } from '../api/vehicles.api';
 
+const { t } = useI18n();
 const loading = ref(true);
 const items = ref<Vehicle[]>([]);
+const sortKey = ref<keyof Vehicle | ''>('make');
+const sortOrder = ref<'asc' | 'desc'>('asc');
+const searchQuery = ref('');
+const showAutocomplete = ref(false);
+
+const sortedItems = computed(() => {
+  const key = sortKey.value;
+  if (!key || !items.value.length) return items.value;
+  return [...items.value].sort((a, b) => {
+    const va = a[key] ?? '';
+    const vb = b[key] ?? '';
+    const cmp = typeof va === 'number' && typeof vb === 'number' ? va - vb : String(va).localeCompare(String(vb));
+    return sortOrder.value === 'asc' ? cmp : -cmp;
+  });
+});
+
+function searchableString(v: Vehicle): string {
+  return [
+    v.make,
+    v.model,
+    v.vin ?? '',
+    v.registration ?? '',
+    String(v.mileage),
+    t(statusLabel(v.status)),
+  ].join(' ').toLowerCase();
+}
+
+const filteredBySearch = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase();
+  if (!q) return sortedItems.value;
+  return sortedItems.value.filter((v) => searchableString(v).includes(q));
+});
+
+const autocompleteSuggestions = computed(() => filteredBySearch.value.slice(0, 8));
+
+function rowSummary(v: Vehicle): string {
+  return [v.make, v.model, v.vin ?? '', v.registration ?? ''].filter(Boolean).join(' ');
+}
+
+function selectSuggestion(v: Vehicle) {
+  searchQuery.value = rowSummary(v);
+  showAutocomplete.value = false;
+}
+
+function onSearchBlur() {
+  setTimeout(() => { showAutocomplete.value = false; }, 150);
+}
+
+function setSort(key: keyof Vehicle) {
+  if (sortKey.value === key) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortKey.value = key;
+    sortOrder.value = 'asc';
+  }
+}
 const drawerOpen = ref(false);
 const editingId = ref<string | null>(null);
 const saving = ref(false);
@@ -196,22 +296,38 @@ onMounted(() => load());
 .vehicles-page { width: 100%; }
 .vehicles-page__title { font-size: 1.75rem; font-weight: 600; margin: 0 0 0.25rem; color: #333; }
 .vehicles-page__subtitle { font-size: 0.9rem; color: #666; margin: 0 0 1.5rem; }
-.vehicles-page__actions { margin-bottom: 1rem; }
+.vehicles-page__actions { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.vehicles-page__search-wrap { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
+.vehicles-page__search { width: 100%; padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; box-sizing: border-box; }
+.vehicles-page__autocomplete { position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 0; list-style: none; background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 240px; overflow-y: auto; z-index: 10; }
+.vehicles-page__autocomplete-item { padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.9rem; }
+.vehicles-page__autocomplete-item:hover { background: #f0f0f0; }
 .vehicles-page__btn { padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent; }
 .vehicles-page__btn--primary { background: #1976d2; color: #fff; }
 .vehicles-page__btn--secondary { background: #f5f5f5; color: #333; border-color: #ddd; }
 .vehicles-page__btn--danger { background: #c62828; color: #fff; }
 .vehicles-page__btn--small { padding: 0.25rem 0.5rem; font-size: 0.8rem; }
+.vehicles-page__cell-actions { display: flex; align-items: center; gap: 0.25rem; }
+.vehicles-page__btn--icon { padding: 0.4rem; min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
+.vehicles-page__btn--icon:hover { opacity: 0.9; }
 .vehicles-page__table-wrap { border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden; background: #fff; }
 .vehicles-page__table { width: 100%; border-collapse: collapse; }
 .vehicles-page__table th { text-align: left; padding: 0.75rem 1rem; background: #f5f5f5; font-size: 0.8rem; font-weight: 600; color: #666; }
+.vehicles-page__th--sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.vehicles-page__th--sortable:hover { background: #eee; }
+.vehicles-page__th--sorted { color: #1976d2; }
+.vehicles-page__sort-icon { display: inline-block; vertical-align: middle; margin-left: 2px; }
+.vehicles-page__sort-placeholder { display: inline-block; opacity: 0.35; font-size: 0.7rem; margin-left: 2px; }
 .vehicles-page__table td { padding: 0.75rem 1rem; border-top: 1px solid #eee; font-size: 0.9rem; }
 .vehicles-page__row-loading td, .vehicles-page__row-empty td { text-align: center; padding: 2rem; color: #888; }
 .vehicles-page__drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; }
 .vehicles-page__drawer { position: fixed; top: 0; right: 0; width: 360px; max-width: 100%; height: 100%; background: #fff; box-shadow: -2px 0 12px rgba(0,0,0,0.15); z-index: 101; transform: translateX(100%); transition: transform 0.2s; }
 .vehicles-page__drawer--open { transform: translateX(0); }
 .vehicles-page__drawer-inner { padding: 1.5rem; }
-.vehicles-page__drawer-title { font-size: 1.25rem; margin: 0 0 1rem; }
+.vehicles-page__drawer-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.vehicles-page__drawer-title { font-size: 1.25rem; margin: 0; }
+.vehicles-page__drawer-close { width: 32px; height: 32px; padding: 0; border: none; background: transparent; font-size: 1.5rem; line-height: 1; color: #666; cursor: pointer; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.vehicles-page__drawer-close:hover { background: #f0f0f0; color: #333; }
 .vehicles-page__form { display: flex; flex-direction: column; gap: 0.75rem; }
 .vehicles-page__label { font-size: 0.875rem; font-weight: 500; color: #333; }
 .vehicles-page__input { padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; width: 100%; box-sizing: border-box; }

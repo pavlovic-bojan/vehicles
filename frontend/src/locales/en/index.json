@@ -179,6 +179,8 @@
     "delete": "Delete",
     "yes": "Yes",
     "no": "No",
-    "all": "All"
+    "all": "All",
+    "searchPlaceholder": "Search table by all columns",
+    "noMatches": "No matches for your search."
   }
 }

@@ -179,6 +179,8 @@
     "delete": "Obriši",
     "yes": "Da",
     "no": "Ne",
-    "all": "Sve"
+    "all": "Sve",
+    "searchPlaceholder": "Pretražite tabelu po svim kolonama",
+    "noMatches": "Nema rezultata za pretragu."
   }
 }
