@@ -10,10 +10,21 @@ router.use(authenticate);
  * @swagger
  * /api/reports/summary:
  *   get:
- *     summary: "Report summary (counts - vehicles, drivers, trips, fuel records, locations)"
+ *     summary: "Report summary (counts - optionally filter trips and fuel by date range)"
  *     tags: [Reports]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: from
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *       - in: query
+ *         name: to
+ *         schema:
+ *           type: string
+ *           format: date-time
  *     responses:
  *       200:
  *         description: Summary counts
@@ -74,6 +85,22 @@ router.get('/fuel', (req, res, next) =>
  */
 router.get('/trips', (req, res, next) =>
   reportController.getTripsReport(req as AuthRequest, res).catch(next)
+);
+
+/**
+ * @swagger
+ * /api/reports/locations:
+ *   get:
+ *     summary: Locations report (parking and service)
+ *     tags: [Reports]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Locations list
+ */
+router.get('/locations', (req, res, next) =>
+  reportController.getLocationsReport(req as AuthRequest, res).catch(next)
 );
 
 export default router;

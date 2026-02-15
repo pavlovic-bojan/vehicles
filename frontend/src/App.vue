@@ -379,14 +379,23 @@ html.dark-theme .audit-page__title { color: #e0e0e0; }
 html.dark-theme .audit-page__subtitle { color: #b0b0b0; }
 html.dark-theme .audit-page__forbidden,
 html.dark-theme .audit-page__loading { color: #999; }
+html.dark-theme .audit-page__search { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
+html.dark-theme .audit-page__btn--secondary { background: #3d3d3d; color: #e0e0e0; border-color: #555; }
 html.dark-theme .audit-page__table-wrap { background: #2d2d2d; border-color: #444; }
 html.dark-theme .audit-page__table th { background: #3d3d3d; color: #ccc; }
+html.dark-theme .audit-page__th--sorted { color: #64b5f6; }
 html.dark-theme .audit-page__table td { border-color: #444; color: #e0e0e0; }
 html.dark-theme .audit-page__row-empty td { color: #888; }
+html.dark-theme .audit-page__pagination-label,
+html.dark-theme .audit-page__pagination-showing { color: #b0b0b0; }
+html.dark-theme .audit-page__pagination-page { color: #e0e0e0; }
+html.dark-theme .audit-page__select { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
 
 /* Dark theme: Reports */
 html.dark-theme .reports-page__title { color: #e0e0e0; }
 html.dark-theme .reports-page__subtitle { color: #b0b0b0; }
+html.dark-theme .reports-page__label { color: #b0b0b0; }
+html.dark-theme .reports-page__input { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
 html.dark-theme .reports-page__btn--secondary { background: #3d3d3d; color: #e0e0e0; border-color: #555; }
 html.dark-theme .reports-page__loading { color: #999; }
 html.dark-theme .reports-page__section-title { color: #e0e0e0; }
@@ -395,12 +404,19 @@ html.dark-theme .reports-page__card-value { color: #e0e0e0; }
 html.dark-theme .reports-page__card-label { color: #b0b0b0; }
 html.dark-theme .reports-page__table-wrap { background: #2d2d2d; border-color: #444; }
 html.dark-theme .reports-page__table th { background: #3d3d3d; color: #ccc; }
+html.dark-theme .reports-page__th--sorted { color: #64b5f6; }
 html.dark-theme .reports-page__table td { border-color: #444; color: #e0e0e0; }
+html.dark-theme .reports-page__pagination-label,
+html.dark-theme .reports-page__pagination-showing { color: #b0b0b0; }
+html.dark-theme .reports-page__pagination-page { color: #e0e0e0; }
+html.dark-theme .reports-page__select { background: #2d2d2d; border-color: #555; color: #e0e0e0; }
 html.dark-theme .reports-page__total,
 html.dark-theme .reports-page__bar-label,
 html.dark-theme .reports-page__bar-value { color: #e0e0e0; }
+html.dark-theme .reports-page__trips-by-org-title { color: #e0e0e0; }
 html.dark-theme .reports-page__bar-track { background: #3d3d3d; }
 html.dark-theme .reports-page__no-data { color: #888; }
+html.dark-theme .reports-page__period { color: #b0b0b0; }
 
 /* Dark theme: Trailers */
 html.dark-theme .trailers-page__title { color: #e0e0e0; }

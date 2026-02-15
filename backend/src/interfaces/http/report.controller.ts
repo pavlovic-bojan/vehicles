@@ -4,7 +4,9 @@ import * as reportService from '../../usecases/report.service.js';
 
 export async function getSummary(req: AuthRequest, res: Response): Promise<void> {
   const orgId = req.user?.orgId ?? null;
-  const summary = await reportService.getSummary(orgId);
+  const from = req.query.from ? new Date(String(req.query.from)) : undefined;
+  const to = req.query.to ? new Date(String(req.query.to)) : undefined;
+  const summary = await reportService.getSummary(orgId, from, to);
   res.json({ data: summary });
 }
 
@@ -21,5 +23,11 @@ export async function getTripsReport(req: AuthRequest, res: Response): Promise<v
   const from = req.query.from ? new Date(String(req.query.from)) : undefined;
   const to = req.query.to ? new Date(String(req.query.to)) : undefined;
   const data = await reportService.getTripsReport(orgId, from, to);
+  res.json({ data });
+}
+
+export async function getLocationsReport(req: AuthRequest, res: Response): Promise<void> {
+  const orgId = req.user?.orgId ?? null;
+  const data = await reportService.getLocationsReport(orgId);
   res.json({ data });
 }

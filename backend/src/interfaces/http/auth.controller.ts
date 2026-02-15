@@ -59,9 +59,19 @@ export async function listAudit(req: AuthRequest, res: Response): Promise<void> 
   if (req.user.role !== 'ADMIN') {
     throw new ApiError('Admin only', 403, 'FORBIDDEN');
   }
-  const limit = Math.min(Number(req.query.limit) || 200, 500);
-  const items = await authService.listLoginAudit(req.user.orgId ?? null, limit);
-  res.json({ data: items });
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+  const sort = (req.query.sort as authService.AuditSortKey) || 'createdAt';
+  const order = (req.query.order === 'asc' || req.query.order === 'desc') ? req.query.order : 'desc';
+  const search = typeof req.query.search === 'string' ? req.query.search : undefined;
+  const result = await authService.listLoginAudit(req.user.orgId ?? null, {
+    page,
+    limit,
+    sort,
+    order,
+    search,
+  });
+  res.json(result);
 }
 
 export async function register(req: AuthRequest, res: Response): Promise<void> {

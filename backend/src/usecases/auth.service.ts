@@ -357,13 +357,57 @@ export async function devLogin(
   };
 }
 
-export async function listLoginAudit(orgId: string | null, limit = 200) {
-  return prisma.loginAudit.findMany({
-    where: orgId ? { user: { orgId } } : {},
-    orderBy: { createdAt: 'desc' },
-    take: limit,
-    include: {
-      user: { select: { id: true, email: true, name: true, role: true } },
-    },
-  });
+export type AuditSortKey = 'createdAt' | 'action' | 'ip' | 'userAgent' | 'user';
+
+export async function listLoginAudit(
+  orgId: string | null,
+  options: {
+    page?: number;
+    limit?: number;
+    sort?: AuditSortKey;
+    order?: 'asc' | 'desc';
+    search?: string;
+  } = {}
+) {
+  const page = Math.max(1, options.page ?? 1);
+  const limit = Math.min(100, Math.max(1, options.limit ?? 20));
+  const sort = options.sort ?? 'createdAt';
+  const order = options.order ?? 'desc';
+  const search = options.search?.trim();
+
+  const where = buildAuditWhere(orgId, search);
+
+  const orderBy: { createdAt?: 'asc' | 'desc'; action?: 'asc' | 'desc'; ip?: 'asc' | 'desc'; userAgent?: 'asc' | 'desc'; user?: { email: 'asc' | 'desc' } } =
+    sort === 'user' ? { user: { email: order } } : { [sort]: order };
+
+  const [items, total] = await Promise.all([
+    prisma.loginAudit.findMany({
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        user: { select: { id: true, email: true, name: true, role: true } },
+      },
+    }),
+    prisma.loginAudit.count({ where }),
+  ]);
+
+  return { data: items, total };
+}
+
+function buildAuditWhere(orgId: string | null, search: string | undefined) {
+  type Where = Parameters<typeof prisma.loginAudit.findMany>[0]['where'];
+  const base: Where = orgId ? { user: { orgId } } : {};
+  if (!search) return base;
+
+  const searchCond: Where = {
+    OR: [
+      { user: { ...(orgId ? { orgId } : {}), email: { contains: search, mode: 'insensitive' } } },
+      { user: { ...(orgId ? { orgId } : {}), name: { contains: search, mode: 'insensitive' } } },
+      { action: { contains: search, mode: 'insensitive' } },
+      { ip: { contains: search, mode: 'insensitive' } },
+    ],
+  };
+  return { AND: [base, searchCond] } as Where;
 }

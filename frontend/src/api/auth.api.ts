@@ -38,8 +38,8 @@ export const authApi = {
   loginDev: (secret: string) =>
     api.post<{ data: AuthResponse }>('/api/auth/dev', { secret }),
 
-  getAudit: (params?: { limit?: number }) =>
-    api.get<{ data: LoginAuditEntry[] }>('/api/auth/audit', { params }),
+  getAudit: (params?: { page?: number; limit?: number; sort?: string; order?: 'asc' | 'desc'; search?: string }) =>
+    api.get<{ data: LoginAuditEntry[]; total: number }>('/api/auth/audit', { params }),
 };
 
 export interface LoginAuditEntry {
