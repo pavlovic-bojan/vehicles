@@ -184,12 +184,40 @@ html.dark-theme .locations-page__row-empty td {
   color: #999;
 }
 
+/* Dark theme: table action buttons (edit/delete) – dark bg/border so icon area is not a white box */
 html.dark-theme .vehicles-page__btn--icon,
 html.dark-theme .drivers-page__btn--icon,
 html.dark-theme .trips-page__btn--icon,
 html.dark-theme .fuel-page__btn--icon,
-html.dark-theme .locations-page__btn--icon {
+html.dark-theme .locations-page__btn--icon,
+html.dark-theme .trailers-page__btn--icon,
+html.dark-theme .documents-page__btn--icon {
+  background: #3d3d3d;
+  border: 1px solid #555;
+  border-color: #555;
   color: #e0e0e0;
+}
+html.dark-theme .vehicles-page__btn--icon:hover:not(:disabled),
+html.dark-theme .drivers-page__btn--icon:hover:not(:disabled),
+html.dark-theme .trips-page__btn--icon:hover:not(:disabled),
+html.dark-theme .fuel-page__btn--icon:hover:not(:disabled),
+html.dark-theme .locations-page__btn--icon:hover:not(:disabled),
+html.dark-theme .trailers-page__btn--icon:hover:not(:disabled),
+html.dark-theme .documents-page__btn--icon:hover:not(:disabled) {
+  background: #4d4d4d;
+  border-color: #666;
+  color: #fff;
+}
+html.dark-theme .vehicles-page__btn--icon.vehicles-page__btn--danger,
+html.dark-theme .drivers-page__btn--icon.drivers-page__btn--danger,
+html.dark-theme .trips-page__btn--icon.trips-page__btn--danger,
+html.dark-theme .fuel-page__btn--icon.fuel-page__btn--danger,
+html.dark-theme .locations-page__btn--icon.locations-page__btn--danger,
+html.dark-theme .trailers-page__btn--icon.trailers-page__btn--danger,
+html.dark-theme .documents-page__btn--icon.documents-page__btn--danger {
+  background: #c62828;
+  border-color: #8b1a1a;
+  color: #fff;
 }
 
 html.dark-theme .vehicles-page__sort-placeholder,

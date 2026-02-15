@@ -19,17 +19,17 @@ Cloud-based SaaS for fleet and logistics: vehicles, drivers, trips, fuel trackin
    - Create PostgreSQL DB (e.g. `vehicles_db`)
    - Copy `backend/.env.example` → `backend/.env` and set `DATABASE_URL`, `JWT_SECRET`
    - Optional: set `DEV_AUTH_SECRET` for dev-only login
-   - **Redosled:** prvo migracija, pa seed, pa pokretanje backend-a i frontenda.
+   - **Order:** run migrations first, then seed, then start backend and frontend.
    ```bash
    cd backend
-   npx prisma migrate dev --name init   # mora npx prisma (Prisma je u node_modules)
+   npx prisma migrate dev --name init   # use npx prisma (Prisma is in node_modules)
    npx prisma generate
    npm run db:seed
    ```
-   - **Ako dobiješ P3014 (permission denied to create database):** PostgreSQL korisnik nema dozvolu da kreira shadow bazu. Dve opcije:
-     1. **Shadow baza:** Kreiraj praznu bazu (npr. `createdb vehicles_db_shadow`), u `backend/prisma/schema.prisma` u blok `datasource db` dodaj drugi red: `shadowDatabaseUrl = env("SHADOW_DATABASE_URL")`, u `backend/.env` dodaj `SHADOW_DATABASE_URL="postgresql://user:pass@localhost:5432/vehicles_db_shadow"` (isti user/pass kao u DATABASE_URL), pa ponovo `npx prisma migrate dev --name init`.
-     2. **Bez migrate (samo schema):** umesto `migrate dev` koristi `npx prisma db push` – primeni schema na bazu bez migration fajlova (dovoljno za lokalni dev); zatim `npm run db:seed`.
-   - Seed kreira **5 organizacija**, u svakoj po **150 vozila (kamiona), 150 vozača, 150 prikolica, 150 vožnji**, 30 lokacija, 200 fuel unosa, 150 dokumenata i login audit. Prijava: **admin@vehicles.local** ili **admin@org1.vehicles.local** … **admin@org5.vehicles.local** (lozinka: **Password123!**). Da ponovo napuniš bazu (briše sve, primenjuje schema, seed): `cd backend && npm run db:reset`. (Projekat koristi `db push`, ne migracije – `migrate reset` ne bi kreirao tabele.)
+   - **If you get P3014 (permission denied to create database):** PostgreSQL user cannot create the shadow database. Two options:
+     1. **Shadow database:** Create an empty database (e.g. `createdb vehicles_db_shadow`), in `backend/prisma/schema.prisma` in the `datasource db` block add: `shadowDatabaseUrl = env("SHADOW_DATABASE_URL")`, in `backend/.env` add `SHADOW_DATABASE_URL="postgresql://user:pass@localhost:5432/vehicles_db_shadow"` (same user/pass as DATABASE_URL), then run `npx prisma migrate dev --name init` again.
+     2. **Without migrate (schema only):** use `npx prisma db push` instead of `migrate dev` – applies schema without migration files (enough for local dev); then `npm run db:seed`.
+   - Seed creates **5 organizations**, each with **150 vehicles (trucks), 150 drivers, 150 trailers, 150 trips**, 30 locations, 200 fuel records, 150 documents and login audit. Login: **admin@vehicles.local** or **admin@org1.vehicles.local** … **admin@org5.vehicles.local** (password: **Password123!**). To reseed (drops all, applies schema, runs seed): `cd backend && npm run db:reset`. (Project uses `db push`, not migrations – `migrate reset` would not create tables.)
 
 3. **Run backend**
    ```bash
@@ -64,7 +64,7 @@ After running `cd backend && npm run db:seed` (or `npx prisma migrate reset`), y
 | admin@org1.vehicles.local … admin@org5.vehicles.local | ADMIN | Password123! |
 | driver@org1.vehicles.local … driver@org5.vehicles.local | DRIVER | Password123! |
 
-Seed: **5 organizacija**, u svakoj **150 vozila, 150 vozača, 150 prikolica, 150 vožnji**, 30 lokacija, 200 fuel, 150 dokumenata.
+Seed: **5 organizations**, each with **150 vehicles, 150 drivers, 150 trailers, 150 trips**, 30 locations, 200 fuel, 150 documents.
 
 ## Scripts
 
