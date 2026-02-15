@@ -39,11 +39,12 @@ export async function create(req: AuthRequest, res: Response): Promise<void> {
   if (!orgId) {
     throw new ApiError('Organization required to create documents', 403, 'ORG_REQUIRED');
   }
-  const { entityType, entityId, fileName, fileUrl, mimeType } = req.body as {
+  const { entityType, entityId, fileName, fileUrl, contentHash, mimeType } = req.body as {
     entityType: 'TRIP' | 'VEHICLE' | 'DRIVER';
     entityId: string;
     fileName: string;
     fileUrl?: string;
+    contentHash?: string;
     mimeType?: string;
   };
   const doc = await documentService.createDocument({
@@ -52,6 +53,7 @@ export async function create(req: AuthRequest, res: Response): Promise<void> {
     entityId,
     fileName,
     fileUrl,
+    contentHash,
     mimeType,
     uploadedBy: req.user?.id,
   });
@@ -68,4 +70,16 @@ export async function remove(req: AuthRequest, res: Response): Promise<void> {
   const orgId = req.user?.orgId ?? null;
   await documentService.deleteDocument(id, orgId);
   res.json({ data: { ok: true } });
+}
+
+export async function verifyIntegrity(req: AuthRequest, res: Response): Promise<void> {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    res.status(400).json({ errors: errors.array() });
+    return;
+  }
+  const id = req.params.id as string;
+  const orgId = req.user?.orgId ?? null;
+  const result = await documentService.verifyDocumentIntegrity(id, orgId, req.user?.id);
+  res.json({ data: result });
 }

@@ -174,6 +174,8 @@ export async function register(data: {
   if (existing) {
     throw new ApiError('Email already registered', 400, 'EMAIL_EXISTS');
   }
+  // Assign to first existing org so new users see seeded data (e.g. seed org)
+  const firstOrg = await prisma.organization.findFirst({ select: { id: true } });
   const passwordHash = await bcrypt.hash(data.password, SALT_ROUNDS);
   const user = await prisma.user.create({
     data: {
@@ -183,6 +185,7 @@ export async function register(data: {
       providerId: data.email,
       passwordHash,
       role: data.role,
+      orgId: firstOrg?.id ?? null,
     },
   });
   const token = issueJwt(user.id, user.email, user.role);
@@ -352,4 +355,15 @@ export async function devLogin(
       orgId: user.orgId,
     },
   };
+}
+
+export async function listLoginAudit(orgId: string | null, limit = 200) {
+  return prisma.loginAudit.findMany({
+    where: orgId ? { user: { orgId } } : {},
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+    include: {
+      user: { select: { id: true, email: true, name: true, role: true } },
+    },
+  });
 }

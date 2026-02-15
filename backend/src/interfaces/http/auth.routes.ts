@@ -236,6 +236,30 @@ router.get('/me', authenticate, (req, res, next) =>
 
 /**
  * @swagger
+ * /api/auth/audit:
+ *   get:
+ *     summary: List login audit log (Admin only)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 200
+ *     responses:
+ *       200:
+ *         description: List of login audit entries
+ *       403:
+ *         description: Admin only
+ */
+router.get('/audit', authenticate, (req, res, next) =>
+  authController.listAudit(req as AuthRequest, res).catch(next)
+);
+
+/**
+ * @swagger
  * /api/auth/dev:
  *   post:
  *     summary: Dev-only login with secret (only when DEV_AUTH_SECRET is set)

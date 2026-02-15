@@ -64,7 +64,7 @@
           <tr v-else-if="searchQuery && filteredBySearch.length === 0" class="locations-page__row-empty" data-test="row-no-matches">
             <td colspan="5">{{ $t('common.noMatches') }}</td>
           </tr>
-          <tr v-else v-for="loc in filteredBySearch" :key="loc.id" :data-test="`row-location-${loc.id}`">
+          <tr v-else v-for="loc in paginatedItems" :key="loc.id" :data-test="`row-location-${loc.id}`">
             <td>{{ loc.name }}</td>
             <td>{{ loc.type === 'PARKING' ? $t('locations.typeParking') : $t('locations.typeService') }}</td>
             <td>{{ loc.address || '—' }}</td>
@@ -76,6 +76,22 @@
           </tr>
         </tbody>
       </table>
+    </div>
+    <div v-if="!loading && items.length > 0" class="locations-page__pagination" data-test="pagination">
+      <div class="locations-page__pagination-rows">
+        <label for="locations-rows-per-page" class="locations-page__pagination-label">{{ $t('common.rowsPerPage') }}</label>
+        <select id="locations-rows-per-page" v-model.number="rowsPerPage" class="locations-page__select" data-test="select-rows-per-page">
+          <option v-for="n in rowsPerPageOptions" :key="n" :value="n">{{ n }}</option>
+        </select>
+      </div>
+      <span class="locations-page__pagination-showing">{{ $t('common.showingRows', [paginationStart, paginationEnd, filteredBySearch.length]) }}</span>
+      <div class="locations-page__pagination-nav">
+        <button type="button" class="locations-page__btn locations-page__btn--secondary locations-page__btn--small" :disabled="currentPage <= 1" data-test="button-first" @click="currentPage = 1">{{ $t('common.first') }}</button>
+        <button type="button" class="locations-page__btn locations-page__btn--secondary locations-page__btn--small" :disabled="currentPage <= 1" data-test="button-prev" @click="currentPage = Math.max(1, currentPage - 1)">{{ $t('common.previous') }}</button>
+        <span class="locations-page__pagination-page">{{ $t('common.pageOf', [currentPage, totalPages]) }}</span>
+        <button type="button" class="locations-page__btn locations-page__btn--secondary locations-page__btn--small" :disabled="currentPage >= totalPages" data-test="button-next" @click="currentPage = Math.min(totalPages, currentPage + 1)">{{ $t('common.next') }}</button>
+        <button type="button" class="locations-page__btn locations-page__btn--secondary locations-page__btn--small" :disabled="currentPage >= totalPages" data-test="button-last" @click="currentPage = totalPages">{{ $t('common.last') }}</button>
+      </div>
     </div>
 
     <div v-if="drawerOpen" class="locations-page__drawer-overlay" data-test="drawer-overlay" @click="closeDrawer"></div>
@@ -122,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { Pencil, Trash2, ChevronUp, ChevronDown } from 'lucide-vue-next';
 import { locationsApi, type Location as LocationType, type LocationStatus } from '../api/locations.api';
@@ -139,6 +155,9 @@ const sortKey = ref<keyof LocationType | ''>('name');
 const sortOrder = ref<'asc' | 'desc'>('asc');
 const searchQuery = ref('');
 const showAutocomplete = ref(false);
+const currentPage = ref(1);
+const rowsPerPage = ref(10);
+const rowsPerPageOptions = [10, 25, 50, 100];
 
 const form = ref({
   name: '',
@@ -191,6 +210,24 @@ const filteredBySearch = computed(() => {
   const q = searchQuery.value.trim().toLowerCase();
   if (!q) return sortedFilteredItems.value;
   return sortedFilteredItems.value.filter((loc) => searchableString(loc).includes(q));
+});
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredBySearch.value.length / rowsPerPage.value)));
+const paginatedItems = computed(() => {
+  const list = filteredBySearch.value;
+  const per = rowsPerPage.value;
+  const page = Math.min(currentPage.value, totalPages.value);
+  const start = (page - 1) * per;
+  return list.slice(start, start + per);
+});
+const paginationStart = computed(() => {
+  if (filteredBySearch.value.length === 0) return 0;
+  return (currentPage.value - 1) * rowsPerPage.value + 1;
+});
+const paginationEnd = computed(() => Math.min(currentPage.value * rowsPerPage.value, filteredBySearch.value.length));
+
+watch([filteredBySearch, rowsPerPage], () => {
+  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value;
 });
 
 const autocompleteSuggestions = computed(() => filteredBySearch.value.slice(0, 8));
@@ -293,6 +330,13 @@ onMounted(() => load());
 .locations-page__autocomplete { position: absolute; top: 100%; left: 0; right: 0; margin: 0; padding: 0; list-style: none; background: #fff; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-height: 240px; overflow-y: auto; z-index: 10; }
 .locations-page__autocomplete-item { padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.9rem; }
 .locations-page__autocomplete-item:hover { background: #f0f0f0; }
+.locations-page__pagination { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+.locations-page__pagination-rows { display: flex; align-items: center; gap: 0.5rem; }
+.locations-page__pagination-label { font-size: 0.9rem; color: #666; white-space: nowrap; }
+.locations-page__select { padding: 0.35rem 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; background: #fff; }
+.locations-page__pagination-showing { font-size: 0.9rem; color: #666; }
+.locations-page__pagination-nav { display: flex; align-items: center; gap: 0.5rem; }
+.locations-page__pagination-page { font-size: 0.9rem; color: #333; min-width: 6rem; text-align: center; }
 .locations-page__btn { padding: 0.5rem 1rem; border-radius: 4px; font-size: 0.9rem; cursor: pointer; border: 1px solid transparent; }
 .locations-page__btn--primary { background: #1976d2; color: #fff; }
 .locations-page__btn--secondary { background: #f5f5f5; color: #333; border-color: #ddd; }
@@ -302,8 +346,8 @@ onMounted(() => load());
 .locations-page__btn--icon { padding: 0.4rem; min-width: 32px; min-height: 32px; display: inline-flex; align-items: center; justify-content: center; }
 .locations-page__btn--icon:hover { opacity: 0.9; }
 .locations-page__filter { padding: 0.5rem 0.75rem; border: 1px solid #ccc; border-radius: 4px; font-size: 0.9rem; }
-.locations-page__table-wrap { border: 1px solid #e0e0e0; border-radius: 4px; overflow: hidden; background: #fff; }
-.locations-page__table { width: 100%; border-collapse: collapse; }
+.locations-page__table-wrap { border: 1px solid #e0e0e0; border-radius: 4px; overflow: auto; -webkit-overflow-scrolling: touch; max-height: 70vh; background: #fff; }
+.locations-page__table { width: 100%; min-width: max-content; border-collapse: collapse; }
 .locations-page__table th { text-align: left; padding: 0.75rem 1rem; background: #f5f5f5; font-size: 0.8rem; font-weight: 600; color: #666; }
 .locations-page__th--sortable { cursor: pointer; user-select: none; white-space: nowrap; }
 .locations-page__th--sortable:hover { background: #eee; }

@@ -52,6 +52,18 @@ export async function getMe(req: AuthRequest, res: Response): Promise<void> {
   res.json({ data: user });
 }
 
+export async function listAudit(req: AuthRequest, res: Response): Promise<void> {
+  if (!req.user) {
+    throw new ApiError('Unauthorized', 401);
+  }
+  if (req.user.role !== 'ADMIN') {
+    throw new ApiError('Admin only', 403, 'FORBIDDEN');
+  }
+  const limit = Math.min(Number(req.query.limit) || 200, 500);
+  const items = await authService.listLoginAudit(req.user.orgId ?? null, limit);
+  res.json({ data: items });
+}
+
 export async function register(req: AuthRequest, res: Response): Promise<void> {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

@@ -8,8 +8,13 @@ Express + TypeScript API with Prisma (PostgreSQL), JWT auth, OAuth (Google/Faceb
 2. Set `DATABASE_URL`, `JWT_SECRET` (min 32 chars)
 3. Optional: `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`, `FACEBOOK_APP_ID` / `FACEBOOK_APP_SECRET` for OAuth
 4. Optional: `DEV_AUTH_SECRET` for dev-only login
-5. Run migrations: `npx prisma migrate dev`
-6. Generate client: `npx prisma generate`
+5. **Redosled:** migracija → seed → pokretanje
+   ```bash
+   npx prisma migrate dev        # nova migracija (ili migrate deploy u produkciji)
+   npx prisma generate
+   npm run db:seed              # puni bazu (org, users, vehicles, trailers, drivers, locations, trips, fuel, documents, login audit)
+   ```
+6. Pokreni backend: `npm run dev`, zatim frontend iz root-a: `npm run frontend:dev`
 
 ## Run
 

@@ -5,196 +5,279 @@ const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 10;
 
-const SEED_ORG = {
-  id: '00000000-0000-0000-0000-000000000001',
-  name: 'Demo Transport DOO',
-};
+const PER_ORG = 150;
+const NUM_ORGS = 5;
+const LOCATIONS_PER_ORG = 30;
+const FUEL_PER_ORG = 200;
+const DOCUMENTS_PER_ORG = 150;
 
-const seedUsers = [
-  { email: 'admin@vehicles.local', name: 'Admin User', role: 'ADMIN' as const, password: 'Password123!' },
-  { email: 'driver@vehicles.local', name: 'Driver One', role: 'DRIVER' as const, password: 'Password123!' },
-  { email: 'auditor@vehicles.local', name: 'Auditor User', role: 'AUDITOR' as const, password: 'Password123!' },
+const ORG_NAMES = [
+  'Demo Transport DOO',
+  'Brzi Prevoz DOO',
+  'Logistik Plus DOO',
+  'Fleet Solutions DOO',
+  'Auto Park DOO',
 ];
 
-const seedVehicles = [
-  { make: 'Mercedes-Benz', model: 'Actros 2651', vin: 'WDB9630321L123456', registration: 'BG-12345-A', mileage: 125_000, purchaseDate: new Date('2021-03-15'), status: 'ACTIVE' as const },
-  { make: 'Scania', model: 'R 450', vin: 'YS2R4X20005399401', registration: 'BG-67890-B', mileage: 89_500, purchaseDate: new Date('2022-06-01'), status: 'ACTIVE' as const },
-  { make: 'Volvo', model: 'FH 500', vin: 'YV1LW58C8X1234567', registration: 'BG-11111-C', mileage: 210_000, purchaseDate: new Date('2019-11-20'), status: 'IN_SERVICE' as const },
-  { make: 'MAN', model: 'TGX 26.480', vin: 'WMA13XZZ0K1234567', registration: 'BG-22222-D', mileage: 45_000, purchaseDate: new Date('2023-01-10'), status: 'ACTIVE' as const },
-  { make: 'DAF', model: 'XF 480', vin: 'XLRTE47MS0Y123456', registration: 'BG-33333-E', mileage: 167_000, purchaseDate: new Date('2020-07-05'), status: 'PAUSED' as const },
+const vehicleMakesModels = [
+  { make: 'Mercedes-Benz', model: 'Actros 2651', mileage: 125_000 },
+  { make: 'Scania', model: 'R 450', mileage: 89_500 },
+  { make: 'Volvo', model: 'FH 500', mileage: 210_000 },
+  { make: 'MAN', model: 'TGX 26.480', mileage: 45_000 },
+  { make: 'DAF', model: 'XF 480', mileage: 167_000 },
+  { make: 'Iveco', model: 'Stralis NP 460', mileage: 78_000 },
+  { make: 'Mercedes-Benz', model: 'Atego 1825', mileage: 95_000 },
+  { make: 'Scania', model: 'P 320', mileage: 112_000 },
+  { make: 'Volvo', model: 'FE 320', mileage: 88_000 },
+  { make: 'MAN', model: 'TGS 35.440', mileage: 134_000 },
+  { make: 'DAF', model: 'CF 430', mileage: 201_000 },
+  { make: 'Renault', model: 'T Range T 520', mileage: 156_000 },
+  { make: 'Mercedes-Benz', model: 'Econic 2628', mileage: 67_000 },
+  { make: 'Scania', model: 'L 320', mileage: 91_000 },
 ];
 
-const seedTrailers = [
-  { make: 'Schmitz Cargobull', model: 'S.KO COOL 25', registration: 'BG-T-11111', mileage: 95_000, purchaseDate: new Date('2020-09-12'), status: 'ACTIVE' as const },
-  { make: 'Krone', model: 'Cool Liner', registration: 'BG-T-22222', mileage: 72_000, purchaseDate: new Date('2021-05-20'), status: 'ACTIVE' as const },
+const trailerTemplates = [
+  { make: 'Schmitz Cargobull', model: 'S.KO COOL 25' },
+  { make: 'Krone', model: 'Cool Liner' },
+  { make: 'Schmitz Cargobull', model: 'S.KO MEGA 25' },
+  { make: 'Krone', model: 'Profi Liner' },
+  { make: 'Lamberet', model: 'Refrigerated' },
+  { make: 'Gray Adams', model: 'Drop Deck' },
+  { make: 'Schmitz Cargobull', model: 'S.KO CURTAIN' },
+  { make: 'Krone', model: 'Mega Liner' },
 ];
 
-const seedDrivers = [
-  { name: 'Marko Petrović', licenseNumber: 'DL-123456', licenseExpiry: new Date('2026-12-31'), phone: '+381 64 123 4567', status: 'ACTIVE' as const },
-  { name: 'Jovan Jovanović', licenseNumber: 'DL-234567', licenseExpiry: new Date('2025-06-15'), phone: '+381 65 234 5678', status: 'ACTIVE' as const },
-  { name: 'Ana Nikolić', licenseNumber: 'DL-345678', licenseExpiry: new Date('2026-03-20'), phone: '+381 63 345 6789', status: 'ACTIVE' as const },
+const driverNameTemplates = [
+  'Marko Petrović', 'Jovan Jovanović', 'Ana Nikolić', 'Stefan Đorđević', 'Milica Pavlović',
+  'Nikola Ilić', 'Jelena Stojanović', 'Dušan Marković', 'Sandra Todorović', 'Ivan Kostić',
+  'Maja Popović', 'Luka Simić', 'Petar Nikolić', 'Milan Jovanović', 'Teodora Pavlović',
 ];
 
-async function main() {
-  // 1. Organization
+const locationTemplates = [
+  { name: 'Depo Beograd Centar', type: 'PARKING' as const, address: 'Bulevar oslobođenja 123, Beograd' },
+  { name: 'Depo Novi Sad', type: 'PARKING' as const, address: 'Bulevar cara Lazara 45, Novi Sad' },
+  { name: 'Parking Niš', type: 'PARKING' as const, address: 'Obrenovićeva 78, Niš' },
+  { name: 'Servis Beograd', type: 'SERVICE' as const, address: 'Industrijska 12, Beograd' },
+  { name: 'Servis Novi Sad', type: 'SERVICE' as const, address: 'Industrijska zona 5, Novi Sad' },
+  { name: 'Parking Subotica', type: 'PARKING' as const, address: 'Matije Korvina 20, Subotica' },
+  { name: 'Depo Kragujevac', type: 'PARKING' as const, address: 'Jovana Cvijića 100, Kragujevac' },
+  { name: 'Servis Niš', type: 'SERVICE' as const, address: 'Trupale putev 8, Niš' },
+  { name: 'Parking Pančevo', type: 'PARKING' as const, address: 'Vojvođanska 33, Pančevo' },
+  { name: 'Depo Šabac', type: 'PARKING' as const, address: 'Despota Stefana 15, Šabac' },
+];
+
+const tripStatuses: Array<'PRE_TRIP' | 'IN_PROGRESS' | 'POST_TRIP' | 'COMPLETED'> = ['COMPLETED', 'COMPLETED', 'COMPLETED', 'IN_PROGRESS', 'POST_TRIP', 'COMPLETED'];
+
+function addDays(d: Date, days: number): Date {
+  const out = new Date(d);
+  out.setDate(out.getDate() + days);
+  return out;
+}
+
+function addHours(d: Date, h: number): Date {
+  const out = new Date(d);
+  out.setHours(out.getHours() + h);
+  return out;
+}
+
+async function seedOrganization(orgIndex: number) {
+  const orgName = ORG_NAMES[orgIndex];
+  const orgId = `00000000-0000-0000-0000-${String(orgIndex + 1).padStart(12, '0')}`;
+  const prefix = `org${orgIndex + 1}`;
+
   const org = await prisma.organization.upsert({
-    where: { id: SEED_ORG.id },
-    create: { id: SEED_ORG.id, name: SEED_ORG.name },
-    update: { name: SEED_ORG.name },
+    where: { id: orgId },
+    create: { id: orgId, name: orgName },
+    update: { name: orgName },
   });
-  console.log('Organization:', org.name);
+  console.log(`[${orgName}] Organization ready.`);
 
-  // 2. Users (all linked to org)
-  for (const u of seedUsers) {
-    const passwordHash = await bcrypt.hash(u.password, SALT_ROUNDS);
+  const adminEmail = `admin@${prefix}.vehicles.local`;
+  const driverEmail = `driver@${prefix}.vehicles.local`;
+  const passwordHash = await bcrypt.hash('Password123!', SALT_ROUNDS);
+  await prisma.user.upsert({
+    where: { provider_providerId: { provider: 'email', providerId: adminEmail } },
+    create: { email: adminEmail, name: `Admin ${orgName}`, provider: 'email', providerId: adminEmail, passwordHash, role: 'ADMIN', orgId: org.id },
+    update: { name: `Admin ${orgName}`, passwordHash, orgId: org.id },
+  });
+  await prisma.user.upsert({
+    where: { provider_providerId: { provider: 'email', providerId: driverEmail } },
+    create: { email: driverEmail, name: `Driver ${orgName}`, provider: 'email', providerId: driverEmail, passwordHash, role: 'DRIVER', orgId: org.id },
+    update: { name: `Driver ${orgName}`, passwordHash, orgId: org.id },
+  });
+  if (orgIndex === 0) {
     await prisma.user.upsert({
-      where: {
-        provider_providerId: { provider: 'email', providerId: u.email },
-      },
-      create: {
-        email: u.email,
-        name: u.name,
-        provider: 'email',
-        providerId: u.email,
-        passwordHash,
-        role: u.role,
-        orgId: org.id,
-      },
-      update: {
-        name: u.name,
-        passwordHash,
-        role: u.role,
-        orgId: org.id,
-      },
+      where: { provider_providerId: { provider: 'email', providerId: 'admin@vehicles.local' } },
+      create: { email: 'admin@vehicles.local', name: 'Admin User', provider: 'email', providerId: 'admin@vehicles.local', passwordHash, role: 'ADMIN', orgId: org.id },
+      update: { orgId: org.id },
+    });
+    await prisma.user.upsert({
+      where: { provider_providerId: { provider: 'email', providerId: 'driver@vehicles.local' } },
+      create: { email: 'driver@vehicles.local', name: 'Driver One', provider: 'email', providerId: 'driver@vehicles.local', passwordHash, role: 'DRIVER', orgId: org.id },
+      update: { orgId: org.id },
     });
   }
-  console.log('Users:', seedUsers.map((u) => u.email).join(', '));
+  const adminUser = await prisma.user.findFirst({ where: { orgId: org.id, role: 'ADMIN' } });
 
-  // 3. Vehicles (only create if none exist for this org; skip if vehicles table missing)
-  try {
-    const existingVehicles = await prisma.vehicle.count({ where: { orgId: org.id } });
-    if (existingVehicles === 0) {
-      for (const v of seedVehicles) {
-        await prisma.vehicle.create({
-          data: {
-            orgId: org.id,
-            make: v.make,
-            model: v.model,
-            vin: v.vin,
-            registration: v.registration,
-            mileage: v.mileage,
-            purchaseDate: v.purchaseDate,
-            status: v.status,
-          },
-        });
-      }
-      console.log('Vehicles created:', seedVehicles.length);
-    } else {
-      console.log('Vehicles already exist for org, skipped:', existingVehicles);
+  const vehicleIds: string[] = [];
+  const statuses: Array<'ACTIVE' | 'PAUSED' | 'FROZEN' | 'IN_SERVICE'> = ['ACTIVE', 'ACTIVE', 'PAUSED', 'IN_SERVICE', 'ACTIVE'];
+  for (let i = 0; i < PER_ORG; i++) {
+    const v = vehicleMakesModels[i % vehicleMakesModels.length];
+    const created = await prisma.vehicle.create({
+      data: {
+        orgId: org.id,
+        make: v.make,
+        model: v.model,
+        vin: `VIN-${orgIndex}-${i}-${Date.now().toString(36)}`,
+        registration: `BG-${orgIndex}-${String(i).padStart(5, '0')}`,
+        mileage: v.mileage + i * 1000,
+        purchaseDate: addDays(new Date(), -1000 - i * 10),
+        status: statuses[i % statuses.length],
+      },
+    });
+    vehicleIds.push(created.id);
+  }
+  console.log(`[${orgName}] Vehicles: ${vehicleIds.length}`);
+
+  const driverIds: string[] = [];
+  const driverUser = await prisma.user.findFirst({ where: { orgId: org.id, role: 'DRIVER' } });
+  for (let i = 0; i < PER_ORG; i++) {
+    const name = `${driverNameTemplates[i % driverNameTemplates.length]} #${i + 1}`;
+    const created = await prisma.driver.create({
+      data: {
+        orgId: org.id,
+        name,
+        licenseNumber: `DL-${orgIndex}-${String(i).padStart(6, '0')}`,
+        licenseExpiry: addDays(new Date(), 180 + i * 10),
+        phone: `+381 6${(i % 9)} ${String(1000000 + i).slice(1)}`,
+        status: i % 10 === 0 ? 'PAUSED' : 'ACTIVE',
+        userId: i === 0 && driverUser ? driverUser.id : null,
+      },
+    });
+    driverIds.push(created.id);
+  }
+  console.log(`[${orgName}] Drivers: ${driverIds.length}`);
+
+  const trailerData = Array.from({ length: PER_ORG }, (_, i) => {
+    const t = trailerTemplates[i % trailerTemplates.length];
+    return {
+      orgId: org.id,
+      make: t.make,
+      model: t.model,
+      registration: `BG-T-${orgIndex}-${String(i).padStart(5, '0')}`,
+      mileage: 70_000 + i * 500,
+      purchaseDate: addDays(new Date(), -800 - i),
+      status: i % 15 === 0 ? 'PAUSED' : ('ACTIVE' as const),
+    };
+  });
+  await prisma.trailer.createMany({ data: trailerData });
+  console.log(`[${orgName}] Trailers: ${PER_ORG}`);
+
+  const locData = Array.from({ length: LOCATIONS_PER_ORG }, (_, i) => {
+    const loc = locationTemplates[i % locationTemplates.length];
+    return {
+      orgId: org.id,
+      name: `${loc.name} (${orgName}) ${i + 1}`,
+      type: loc.type,
+      address: loc.address,
+      status: 'ACTIVE' as const,
+    };
+  });
+  await prisma.location.createMany({ data: locData });
+  console.log(`[${orgName}] Locations: ${LOCATIONS_PER_ORG}`);
+
+  const trips: { id: string; vehicleId: string; driverId: string }[] = [];
+  for (let i = 0; i < PER_ORG; i++) {
+    const startAt = addDays(new Date(), -90 + (i % 60));
+    startAt.setHours(6 + (i % 12), (i % 60) % 60, 0, 0);
+    const endAt = addHours(startAt, 4 + (i % 8));
+    const status = tripStatuses[i % tripStatuses.length];
+    const startMileage = 50_000 + i * 300;
+    const endMileage = startMileage + 200 + (i % 500);
+    const created = await prisma.trip.create({
+      data: {
+        orgId: org.id,
+        vehicleId: vehicleIds[i],
+        driverId: driverIds[i],
+        startAt,
+        endAt: status !== 'PRE_TRIP' && status !== 'IN_PROGRESS' ? endAt : null,
+        startMileage,
+        endMileage: status === 'COMPLETED' || status === 'POST_TRIP' ? endMileage : null,
+        status,
+        notes: i % 7 === 0 ? `Vožnja ${i + 1}` : null,
+      },
+    });
+    trips.push({ id: created.id, vehicleId: vehicleIds[i], driverId: driverIds[i] });
+  }
+  console.log(`[${orgName}] Trips: ${trips.length}`);
+
+  const fuelData = Array.from({ length: FUEL_PER_ORG }, (_, i) => {
+    const tIdx = i % trips.length;
+    const t = trips[tIdx];
+    return {
+      orgId: org.id,
+      vehicleId: t.vehicleId,
+      tripId: t.id,
+      amountLiters: 60 + (i % 80),
+      costCents: (100 + (i % 50)) * 100,
+      recordedAt: addDays(new Date(), -60 + (i % 40)),
+      notes: i % 5 === 0 ? 'Full tank' : null,
+    };
+  });
+  await prisma.fuelRecord.createMany({ data: fuelData });
+  console.log(`[${orgName}] Fuel records: ${FUEL_PER_ORG}`);
+
+  if (adminUser) {
+    const docData: { orgId: string; entityType: 'TRIP' | 'VEHICLE' | 'DRIVER'; entityId: string; fileName: string; fileUrl: string | null; mimeType: string; uploadedBy: string }[] = [];
+    const perType = Math.floor(DOCUMENTS_PER_ORG / 3);
+    for (let i = 0; i < perType && i < trips.length; i++) {
+      docData.push({ orgId: org.id, entityType: 'TRIP', entityId: trips[i].id, fileName: `trip-${i + 1}.pdf`, fileUrl: null, mimeType: 'application/pdf', uploadedBy: adminUser.id });
     }
-  } catch (e: unknown) {
-    if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'P2021') {
-      console.log('Vehicles table missing – run "npx prisma db push" then re-run seed to create vehicles.');
-    } else {
-      throw e;
+    for (let i = 0; i < perType && i < vehicleIds.length; i++) {
+      docData.push({ orgId: org.id, entityType: 'VEHICLE', entityId: vehicleIds[i], fileName: `vehicle-${i + 1}.pdf`, fileUrl: null, mimeType: 'application/pdf', uploadedBy: adminUser.id });
     }
+    for (let i = 0; i < perType && i < driverIds.length; i++) {
+      docData.push({ orgId: org.id, entityType: 'DRIVER', entityId: driverIds[i], fileName: `driver-${i + 1}.pdf`, fileUrl: null, mimeType: 'application/pdf', uploadedBy: adminUser.id });
+    }
+    await prisma.document.createMany({ data: docData });
+    console.log(`[${orgName}] Documents: ${docData.length}`);
   }
 
-  // 4. Trailers
-  try {
-    const existingTrailers = await prisma.trailer.count({ where: { orgId: org.id } });
-    if (existingTrailers === 0) {
-      for (const t of seedTrailers) {
-        await prisma.trailer.create({
-          data: {
-            orgId: org.id,
-            make: t.make,
-            model: t.model,
-            registration: t.registration,
-            mileage: t.mileage,
-            purchaseDate: t.purchaseDate,
-            status: t.status,
-          },
-        });
-      }
-      console.log('Trailers created:', seedTrailers.length);
-    } else {
-      console.log('Trailers already exist for org, skipped:', existingTrailers);
-    }
-  } catch (e: unknown) {
-    if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'P2021') {
-      console.log('Trailers table missing – run "npx prisma db push" then re-run seed to create trailers.');
-    } else {
-      throw e;
-    }
+  const usersForAudit = await prisma.user.findMany({ where: { orgId: org.id }, take: 2 });
+  for (const user of usersForAudit) {
+    await prisma.loginAudit.createMany({
+      data: Array.from({ length: 5 }, (_, a) => ({
+        userId: user.id,
+        action: 'LOGIN_SUCCESS',
+        ip: `192.168.${orgIndex}.${10 + a}`,
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0',
+        createdAt: addDays(new Date(), -14 + a),
+      })),
+    });
+  }
+  console.log(`[${orgName}] Login audit created.`);
+}
+
+async function main() {
+  console.log('Seeding database: 5 organizations, 150 vehicles/drivers/trailers/trips per org...');
+
+  const existingOrgs = await prisma.organization.count();
+  if (existingOrgs >= NUM_ORGS) {
+    const vCount = await prisma.vehicle.count();
+    const dCount = await prisma.driver.count();
+    console.log(`Already have ${existingOrgs} orgs, ${vCount} vehicles, ${dCount} drivers.`);
+    console.log('To re-seed from scratch run: cd backend && npx prisma migrate reset');
+    console.log('Seed finished.');
+    return;
   }
 
-  // 5. Drivers (link first driver to driver@vehicles.local user if exists)
-  try {
-    const existingDrivers = await prisma.driver.count({ where: { orgId: org.id } });
-    if (existingDrivers === 0) {
-      const driverUser = await prisma.user.findUnique({
-        where: { provider_providerId: { provider: 'email', providerId: 'driver@vehicles.local' } },
-      });
-      for (let i = 0; i < seedDrivers.length; i++) {
-        const d = seedDrivers[i];
-        await prisma.driver.create({
-          data: {
-            orgId: org.id,
-            name: d.name,
-            licenseNumber: d.licenseNumber,
-            licenseExpiry: d.licenseExpiry,
-            phone: d.phone,
-            status: d.status,
-            userId: i === 0 && driverUser ? driverUser.id : null,
-          },
-        });
-      }
-      console.log('Drivers created:', seedDrivers.length);
-    } else {
-      console.log('Drivers already exist for org, skipped:', existingDrivers);
-    }
-  } catch (e: unknown) {
-    if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'P2021') {
-      console.log('Drivers table missing – run "npx prisma db push" then re-run seed to create drivers.');
-    } else {
-      throw e;
-    }
+  for (let o = 0; o < NUM_ORGS; o++) {
+    await seedOrganization(o);
   }
 
-  // 6. Trips (create sample trips if we have vehicles and drivers)
-  try {
-    const tripCount = await prisma.trip.count({ where: { orgId: org.id } });
-    if (tripCount === 0) {
-      const [vList, dList] = await Promise.all([
-        prisma.vehicle.findMany({ where: { orgId: org.id }, take: 1 }),
-        prisma.driver.findMany({ where: { orgId: org.id }, take: 1 }),
-      ]);
-      if (vList.length > 0 && dList.length > 0) {
-        await prisma.trip.create({
-          data: {
-            orgId: org.id,
-            vehicleId: vList[0].id,
-            driverId: dList[0].id,
-            startAt: new Date(Date.now() - 86400000),
-            startMileage: vList[0].mileage,
-            status: 'COMPLETED',
-            endAt: new Date(),
-            endMileage: vList[0].mileage + 450,
-          },
-        });
-        console.log('Sample trip created.');
-      }
-    }
-  } catch (e: unknown) {
-    if (e && typeof e === 'object' && 'code' in e && (e as { code: string }).code === 'P2021') {
-      console.log('Trips table missing – run "npx prisma db push" then re-run seed.');
-    } else {
-      throw e;
-    }
-  }
-
-  console.log('Seed finished.');
+  console.log('Seed finished successfully.');
+  console.log(`Summary: ${NUM_ORGS} orgs, ${PER_ORG} vehicles/drivers/trailers/trips per org, ${FUEL_PER_ORG} fuel, ${DOCUMENTS_PER_ORG} docs.`);
+  console.log('Login: admin@vehicles.local ili admin@org1.vehicles.local ... admin@org5.vehicles.local / Password123!');
 }
 
 main()

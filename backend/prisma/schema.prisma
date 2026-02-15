@@ -269,13 +269,31 @@ model Document {
   entityId    String
   fileName    String
   fileUrl     String?           // URL or path after upload
+  contentHash String?           // SHA-256 hex for integrity / tampering detection (PRD 4.11)
   mimeType    String?
   uploadedBy  String?
   user        User?             @relation(fields: [uploadedBy], references: [id], onDelete: SetNull)
   createdAt   DateTime          @default(now())
 
+  integrityLogs DocumentIntegrityLog[]
+
   @@index([orgId])
   @@index([entityType, entityId])
   @@map("documents")
+}
+
+// Audit log for file integrity checks (PRD 4.11)
+model DocumentIntegrityLog {
+  id         String   @id @default(uuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  checkedAt  DateTime @default(now())
+  passed     Boolean
+  message    String?
+  userId     String?
+
+  @@index([documentId])
+  @@index([checkedAt])
+  @@map("document_integrity_logs")
 }
 

@@ -12,6 +12,8 @@ import fuelRoutes from './interfaces/http/fuel.routes.js';
 import locationRoutes from './interfaces/http/location.routes.js';
 import gpsRoutes from './interfaces/http/gps.routes.js';
 import documentRoutes from './interfaces/http/document.routes.js';
+import reportRoutes from './interfaces/http/report.routes.js';
+import trailerRoutes from './interfaces/http/trailer.routes.js';
 
 const app = express();
 
@@ -86,6 +88,8 @@ app.use('/api/fuel-records', fuelRoutes);
 app.use('/api/locations', locationRoutes);
 app.use('/api/gps', gpsRoutes);
 app.use('/api/documents', documentRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/trailers', trailerRoutes);
 
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });

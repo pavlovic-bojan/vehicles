@@ -37,4 +37,17 @@ export const authApi = {
 
   loginDev: (secret: string) =>
     api.post<{ data: AuthResponse }>('/api/auth/dev', { secret }),
+
+  getAudit: (params?: { limit?: number }) =>
+    api.get<{ data: LoginAuditEntry[] }>('/api/auth/audit', { params }),
 };
+
+export interface LoginAuditEntry {
+  id: string;
+  userId: string;
+  action: string;
+  ip: string | null;
+  userAgent: string | null;
+  createdAt: string;
+  user: { id: string; email: string; name: string; role: string };
+}

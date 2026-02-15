@@ -68,6 +68,34 @@ router.get(
 
 /**
  * @swagger
+ * /api/documents/{id}/verify-integrity:
+ *   get:
+ *     summary: Verify document file integrity (fetch from fileUrl, compare hash with stored contentHash)
+ *     tags: [Documents]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     responses:
+ *       200:
+ *         description: Result with ok, tampered, message
+ *       404:
+ *         description: Document not found
+ */
+router.get(
+  '/:id/verify-integrity',
+  param('id').isUUID().withMessage('Valid ID is required'),
+  (req, res, next) =>
+    documentController.verifyIntegrity(req as AuthRequest, res).catch(next)
+);
+
+/**
+ * @swagger
  * /api/documents:
  *   post:
  *     summary: Create document metadata (link to trip/vehicle/driver)
@@ -102,6 +130,7 @@ router.post(
     body('entityId').isUUID().withMessage('Valid entityId is required'),
     body('fileName').trim().notEmpty().withMessage('fileName is required'),
     body('fileUrl').optional().trim(),
+    body('contentHash').optional().trim(),
     body('mimeType').optional().trim(),
   ],
   (req, res, next) =>

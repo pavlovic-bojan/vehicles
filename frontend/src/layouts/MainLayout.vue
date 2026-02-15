@@ -92,6 +92,10 @@ import {
   BellRing,
   Fuel,
   MapPin,
+  FileText,
+  ScrollText,
+  BarChart3,
+  Package,
 } from 'lucide-vue-next';
 
 const authStore = useAuthStore();
@@ -114,15 +118,25 @@ const langOptions = [
 const currentLangFlag = computed(() => langOptions.find((o) => o.locale === locale.value)?.flag ?? '🇬🇧');
 const currentLangLabel = computed(() => langOptions.find((o) => o.locale === locale.value)?.label ?? 'English');
 
-const navItems = [
+const baseNavItems = [
   { name: 'dashboard', to: '/', label: 'layout.dashboard', icon: LayoutDashboard },
   { name: 'vehicles', to: '/vehicles', label: 'layout.vehicles', icon: Truck },
   { name: 'drivers', to: '/drivers', label: 'layout.drivers', icon: Users },
   { name: 'trips', to: '/trips', label: 'layout.trips', icon: Route },
   { name: 'fuel', to: '/fuel', label: 'layout.fuel', icon: Fuel },
   { name: 'locations', to: '/locations', label: 'layout.locations', icon: MapPin },
+  { name: 'documents', to: '/documents', label: 'layout.documents', icon: FileText },
   { name: 'notifications', to: '/notifications', label: 'layout.notifications', icon: BellRing },
+  { name: 'reports', to: '/reports', label: 'layout.reports', icon: BarChart3 },
+  { name: 'trailers', to: '/trailers', label: 'layout.trailers', icon: Package },
 ];
+const navItems = computed(() => {
+  const items = [...baseNavItems];
+  if (authStore.user?.role === 'ADMIN') {
+    items.push({ name: 'audit', to: '/audit', label: 'layout.audit', icon: ScrollText });
+  }
+  return items;
+});
 
 const userInitials = computed(() => {
   const name = authStore.user?.name ?? '';
